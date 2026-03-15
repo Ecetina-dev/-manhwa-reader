@@ -42,12 +42,22 @@ export async function getMangaList(offset = 0, limit = 20): Promise<Serie[]> {
  * Get manga details by ID
  */
 export async function getMangaById(id: string): Promise<Serie> {
+  console.log('[MangaDex] Fetching manga:', id);
+  
   const response = await throttledFetch(
     `${MANGADEX_API}/manga/${id}?includes[]=cover_art&includes[]=author&includes[]=artist`
   );
+  
+  if (!response.ok) {
+    console.error('[MangaDex] Error fetching manga:', response.status, response.statusText);
+    throw new Error(`Failed to fetch manga: ${response.status}`);
+  }
+  
   const data = await response.json();
+  console.log('[MangaDex] Manga data received, fetching chapters...');
   
   const chapters = await getChapters(id);
+  console.log('[MangaDex] Chapters received:', chapters.length);
   
   // Cache cover image
   const manga = mapManga(data.data);
@@ -65,12 +75,24 @@ export async function getMangaById(id: string): Promise<Serie> {
  * Get chapter list for a manga
  */
 export async function getChapters(mangaId: string): Promise<Chapter[]> {
+  console.log('[MangaDex] Fetching chapters for:', mangaId);
+  
+  // MangaDex requires language filter - default to English
   const response = await throttledFetch(
-    `${MANGADEX_API}/manga/${mangaId}/feed?limit=100&includes[]=scanlation_group&order[chapter]=desc`
+    `${MANGADEX_API}/manga/${mangaId}/feed?limit=100&includes[]=scanlation_group&order[chapter]=desc&translatedLanguage[]=en`
   );
+  
+  if (!response.ok) {
+    console.error('[MangaDex] Error fetching chapters:', response.status, response.statusText);
+    return [];
+  }
+  
   const data = await response.json();
   
-  if (!data.data) return [];
+  if (!data.data) {
+    console.log('[MangaDex] No chapter data found');
+    return [];
+  }
   
   const chapterMap = new Map<string, MangaDexChapter>();
   
@@ -177,10 +199,12 @@ function mapManga(manga: MangaDexManga): Serie {
   
   const description = manga.attributes.description?.en || '';
   
+  // MangaDex cover fileName format: {uuid}.jpg (without size)
+  // We need to insert size before extension: {uuid}.{size}.jpg
   const coverRel = manga.relationships.find(r => r.type === 'cover_art');
   const coverFileName = coverRel?.attributes?.fileName || '';
   const cover = coverFileName 
-    ? `${COVER_URL}/${manga.id}/${coverFileName}.256.jpg`
+    ? `${COVER_URL}/${manga.id}/${coverFileName.replace('.jpg', '.256.jpg')}`
     : '';
   
   return {
@@ -195,12 +219,25 @@ function mapManga(manga: MangaDexManga): Serie {
 
 /**
  * Get optimized image URL with WebP compression
+ * Only applies to chapter pages (/data/), not covers (/covers/)
  */
 export function getOptimizedImageUrl(url: string, quality = 70): string {
   if (!url) return '';
-  if (url.includes('mangadex')) {
-    return url.replace('/data/', '/data/compressed/').replace('.jpg', `.webp?quality=${quality}`);
+  
+  // Chapter pages: use compressed endpoint with WebP
+  if (url.includes('/data/') && url.includes('mangadex')) {
+    return url
+      .replace('/data/', '/data/compressed/')
+      .replace(/\.jpg$/, `.webp?quality=${quality}`);
   }
+  
+  // Covers: change extension to WebP
+  // URL format: /covers/{manga-id}/{filename}.256.jpg
+  // Should become: /covers/{manga-id}/{filename}.256.webp
+  if (url.includes('/covers/') && url.includes('mangadex')) {
+    return url.replace(/\.jpg$/, '.webp');
+  }
+  
   return url;
 }
 

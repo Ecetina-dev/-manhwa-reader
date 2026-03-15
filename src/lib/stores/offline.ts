@@ -2,43 +2,42 @@ import { browser } from '$app/environment';
 import { networkStatus, isOnline } from '$lib/services/network-status.service';
 import type { OfflineStatus, CachedChapter } from '$lib/types';
 import { cacheImageService } from '$lib/services/cache-image.service';
-import { get } from 'svelte/store';
 
 /**
  * Offline Store using Svelte 5 runes
  * Manages offline state and cached chapters
  */
 function createOfflineStore() {
-  if (!browser) {
-    return {
-      get isOnline() { return true; },
-      get isOffline() { return false; },
-      get lastOnline() { return null; },
-      get cachedChapters() { return []; },
-      async updateCachedChapters() { return []; },
-      async getOfflineStatus(): Promise<OfflineStatus> {
-        return { isOnline: true, lastOnline: null, cachedChapters: [] };
-      },
-    };
-  }
-  
-  // Subscribe to network status
-  const unsubscribe = networkStatus.subscribe((state) => {
-    // Trigger reactivity by updating the state
-    offlineState.isOnline = state.isOnline;
-    offlineState.lastOnline = state.lastOnline;
-  });
-  
+  // Define state first
   const offlineState = {
     isOnline: true,
     lastOnline: null as number | null,
     cachedChapters: [] as CachedChapter[],
   };
   
+  // Initialize in browser environment
+  if (browser) {
+    // Set initial online state
+    offlineState.isOnline = navigator.onLine;
+    
+    // Subscribe to network status
+    networkStatus.subscribe((state) => {
+      offlineState.isOnline = state.isOnline;
+      offlineState.lastOnline = state.lastOnline;
+    });
+    
+    // Initialize cached chapters
+    cacheImageService.getCachedChapters().then((chapters) => {
+      offlineState.cachedChapters = chapters;
+    }).catch(() => {});
+  }
+  
   /**
    * Update the cached chapters list
    */
   async function updateCachedChapters(): Promise<CachedChapter[]> {
+    if (!browser) return [];
+    
     try {
       offlineState.cachedChapters = await cacheImageService.getCachedChapters();
       return offlineState.cachedChapters;
@@ -59,11 +58,6 @@ function createOfflineStore() {
       lastOnline: offlineState.lastOnline,
       cachedChapters: chapters.map((c) => c.chapterId),
     };
-  }
-  
-  // Initialize cached chapters
-  if (browser) {
-    updateCachedChapters();
   }
   
   return {
