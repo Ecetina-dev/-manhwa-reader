@@ -1,35 +1,71 @@
-import type { MangaDexManga, MangaDexChapter, MangaDexPage, Serie, Chapter } from './types';
+import type { MangaDexManga, MangaDexChapter, MangaDexPage, Serie, Chapter } from '$lib/types';
+import { rateLimiter, withThrottle } from '$lib/services/rate-limiter.service';
+import { cacheImageService } from '$lib/services/cache-image.service';
 
 const MANGADEX_API = 'https://api.mangadex.org';
 const COVER_URL = 'https://uploads.mangadex.org/covers';
 
+/**
+ * Fetch with rate limiting
+ */
+async function throttledFetch(url: string): Promise<Response> {
+  return withThrottle(() => fetch(url));
+}
+
+/**
+ * Get list of manga with pagination
+ */
 export async function getMangaList(offset = 0, limit = 20): Promise<Serie[]> {
-  const response = await fetch(
+  const response = await throttledFetch(
     `${MANGADEX_API}/manga?limit=${limit}&offset=${offset}&includes[]=cover_art&order[relevance]=desc`
   );
   const data = await response.json();
   
   if (!data.data) return [];
   
-  return data.data.map((manga: MangaDexManga) => mapManga(manga));
+  // Cache cover images
+  const mangaList = data.data.map((manga: MangaDexManga) => mapManga(manga));
+  
+  // Preload covers in background
+  const coverUrls = mangaList
+    .filter((m: Serie) => m.cover)
+    .map((m: Serie) => getOptimizedImageUrl(m.cover));
+  
+  if (coverUrls.length > 0) {
+    cacheImageService.preloadImages(coverUrls).catch(() => {});
+  }
+  
+  return mangaList;
 }
 
+/**
+ * Get manga details by ID
+ */
 export async function getMangaById(id: string): Promise<Serie> {
-  const response = await fetch(
+  const response = await throttledFetch(
     `${MANGADEX_API}/manga/${id}?includes[]=cover_art&includes[]=author&includes[]=artist`
   );
   const data = await response.json();
   
   const chapters = await getChapters(id);
   
+  // Cache cover image
+  const manga = mapManga(data.data);
+  if (manga.cover) {
+    cacheImageService.getImageWithRetry(getOptimizedImageUrl(manga.cover)).catch(() => {});
+  }
+  
   return {
-    ...mapManga(data.data),
+    ...manga,
     chapters
   };
 }
 
+/**
+ * Get chapter list for a manga
+ */
 export async function getChapters(mangaId: string): Promise<Chapter[]> {
-  const response = await fetch(
+  const response = await throttledFetch(
     `${MANGADEX_API}/manga/${mangaId}/feed?limit=100&includes[]=scanlation_group&order[chapter]=desc`
   );
   const data = await response.json();
@@ -60,10 +96,33 @@ export async function getChapters(mangaId: string): Promise<Chapter[]> {
     }));
 }
 
-export async function getChapterPages(chapterId: string): Promise<MangaDexPage[]> {
-  const response = await fetch(
+/**
+ * Get pages for a chapter
+ * Uses caching and retry logic
+ */
+export async function getChapterPages(chapterId: string, mangaId?: string): Promise<MangaDexPage[]> {
+  // Try to get cached chapter first
+  const cachedChapter = await cacheImageService.getCachedChapters()
+    .then(chapters => chapters.find(c => c.chapterId === chapterId));
+  
+  if (cachedChapter && cachedChapter.pages.length > 0) {
+    // Return cached pages with cached URLs
+    return cachedChapter.pages.map((url): MangaDexPage => ({
+      url,
+      width: 0,
+      height: 0
+    }));
+  }
+  
+  // Fetch from API with rate limiting
+  const response = await throttledFetch(
     `${MANGADEX_API}/at-home/server/${chapterId}`
   );
+  
+  if (!response.ok) {
+    throw new Error(`Failed to fetch chapter: ${response.status}`);
+  }
+  
   const data = await response.json();
   
   if (!data.baseUrl) return [];
@@ -71,15 +130,33 @@ export async function getChapterPages(chapterId: string): Promise<MangaDexPage[]
   const baseUrl = data.baseUrl;
   const chapter = data.chapter;
   
-  return chapter.data.map((filename: string): MangaDexPage => ({
+  // Get optimized URLs
+  const pages = chapter.data.map((filename: string): MangaDexPage => ({
     url: `${baseUrl}/data/${chapter.hash}/${filename}`,
     width: 0,
     height: 0
   }));
+  
+  // Cache chapter pages for offline reading
+  const optimizedUrls = pages.map((p: MangaDexPage) => getOptimizedImageUrl(p.url));
+  if (mangaId) {
+    await cacheImageService.markChapterCached(chapterId, mangaId, optimizedUrls);
+  }
+  
+  // Preload first few pages
+  if (optimizedUrls.length > 0) {
+    const preloadUrls = optimizedUrls.slice(0, 5);
+    cacheImageService.preloadImages(preloadUrls).catch(() => {});
+  }
+  
+  return pages;
 }
 
+/**
+ * Search manga by query
+ */
 export async function searchManga(query: string): Promise<Serie[]> {
-  const response = await fetch(
+  const response = await throttledFetch(
     `${MANGADEX_API}/manga?title=${encodeURIComponent(query)}&limit=20&includes[]=cover_art`
   );
   const data = await response.json();
@@ -89,6 +166,9 @@ export async function searchManga(query: string): Promise<Serie[]> {
   return data.data.map((manga: MangaDexManga) => mapManga(manga));
 }
 
+/**
+ * Map MangaDex API response to our Serie type
+ */
 function mapManga(manga: MangaDexManga): Serie {
   const title = manga.attributes.title.en || 
                 manga.attributes.title['ja-ro'] || 
@@ -113,10 +193,29 @@ function mapManga(manga: MangaDexManga): Serie {
   };
 }
 
+/**
+ * Get optimized image URL with WebP compression
+ */
 export function getOptimizedImageUrl(url: string, quality = 70): string {
   if (!url) return '';
   if (url.includes('mangadex')) {
     return url.replace('/data/', '/data/compressed/').replace('.jpg', `.webp?quality=${quality}`);
   }
   return url;
+}
+
+/**
+ * Get image with caching and retry
+ * This is the main method for getting images in the reader
+ */
+export async function getCachedImageUrl(url: string): Promise<string> {
+  const optimizedUrl = getOptimizedImageUrl(url);
+  return cacheImageService.getImageWithRetry(optimizedUrl);
+}
+
+/**
+ * Check if a chapter is available offline
+ */
+export async function isChapterAvailableOffline(chapterId: string): Promise<boolean> {
+  return cacheImageService.isChapterCached(chapterId);
 }
