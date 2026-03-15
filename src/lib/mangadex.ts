@@ -97,7 +97,7 @@ export async function getChapterPages(chapterId: string): Promise<MangaDexPage[]
   const chapter = data.chapter;
   
   return chapter.data.map((filename: string): MangaDexPage => ({
-    url: `${baseUrl}/data/${chapter.hash}/${filename}`,
+    url: `https://corsproxy.io/?${encodeURIComponent(`${baseUrl}/data/${chapter.hash}/${filename}`)}`,
     width: 0,
     height: 0
   }));
@@ -125,7 +125,7 @@ function mapManga(manga: MangaDexManga): Serie {
   const coverRel = manga.relationships.find(r => r.type === 'cover_art');
   const coverFileName = coverRel?.attributes?.fileName || '';
   const cover = coverFileName 
-    ? `${COVER_URL}/${manga.id}/${coverFileName}.256.jpg`
+    ? `https://corsproxy.io/?${encodeURIComponent(`${COVER_URL}/${manga.id}/${coverFileName}.256.jpg`)}`
     : '';
   
   return {
@@ -141,7 +141,8 @@ function mapManga(manga: MangaDexManga): Serie {
 export function getOptimizedImageUrl(url: string, quality = 70): string {
   if (!url) return '';
   if (url.includes('mangadex')) {
-    return url.replace('/data/', '/data/compressed/').replace('.jpg', `.webp?quality=${quality}`);
+    const optimized = url.replace('/data/', '/data/compressed/').replace('.jpg', `.webp?quality=${quality}`);
+    return `https://corsproxy.io/?${encodeURIComponent(optimized)}`;
   }
   return url;
 }
