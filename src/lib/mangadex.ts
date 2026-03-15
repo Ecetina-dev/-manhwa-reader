@@ -2,11 +2,24 @@ import type { MangaDexManga, MangaDexChapter, MangaDexPage, Serie, Chapter } fro
 
 const MANGADEX_API = 'https://api.mangadex.org';
 const COVER_URL = 'https://uploads.mangadex.org/covers';
-const PROXY = 'https://corsproxy.io/?';
 
 async function fetchWithProxy(url: string): Promise<Response> {
-  const response = await fetch(`${PROXY}${encodeURIComponent(url)}`);
-  return response;
+  const proxies = [
+    'https://api.allorigins.win/raw?url=',
+    'https://cors.eu.org/',
+    'https://thingproxy.freeboard.io/'
+  ];
+  
+  for (const proxy of proxies) {
+    try {
+      const response = await fetch(proxy + encodeURIComponent(url));
+      if (response.ok) return response;
+    } catch (e) {
+      console.log('Proxy failed:', proxy);
+    }
+  }
+  
+  return fetch(url);
 }
 
 export async function getMangaList(offset = 0, limit = 20): Promise<Serie[]> {
