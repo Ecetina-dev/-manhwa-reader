@@ -1,12 +1,15 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { browser } from '$app/environment';
-	import favicon from '$lib/assets/favicon.svg';
-	import '../app.css';
-	import { offlineStore } from '$lib/stores/offline';
-	import { readingStore } from '$lib/stores/reading';
-
-	let { children } = $props();
+  import { onMount } from 'svelte';
+  import { browser } from '$app/environment';
+  import favicon from '$lib/assets/favicon.svg';
+  import '../app.css';
+  import { offlineStore } from '$lib/stores/offline';
+  import { readingStore } from '$lib/stores/reading';
+  import Toast from '$lib/components/Toast.svelte';
+  import { initAnalytics, trackPageView } from '$lib/services/analytics';
+  import { initErrorTracking } from '$lib/services/error-tracking';
+  
+  let { children } = $props();
 
 	let isOnline = $state(true);
 	let showUpdateToast = $state(false);
@@ -19,6 +22,19 @@
 
 		// Update cached chapters
 		offlineStore.updateCachedChapters();
+		
+		// Initialize Analytics
+		initAnalytics();
+		
+		// Track initial page view
+		trackPageView({
+			page_title: document.title,
+			page_location: window.location.href,
+			page_path: window.location.pathname
+		});
+		
+		// Initialize Error Tracking
+		initErrorTracking();
 		
 		// Check network status periodically
 		const checkOnline = () => {
@@ -84,5 +100,8 @@
 
 <!-- Main Content -->
 <div class:mt-8={!isOnline}>
-	{@render children()}
+  {@render children()}
 </div>
+
+<!-- Toast Notifications -->
+<Toast />

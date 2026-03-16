@@ -53,6 +53,11 @@ export interface Serie {
   cover: string;
   description: string;
   status: string;
+  type?: string;
+  demographic?: string;
+  tags?: string[];
+  author?: string;
+  artist?: string;
   chapters: Chapter[];
 }
 

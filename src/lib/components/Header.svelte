@@ -2,10 +2,24 @@
   let { children } = $props();
 </script>
 
-<header class="fixed top-0 left-0 right-0 z-50 glass border-b border-[var(--color-border)]">
+<!-- Skip Link for keyboard navigation -->
+<a 
+  href="#main-content" 
+  class="skip-link"
+>
+  Skip to main content
+</a>
+
+<header 
+  class="fixed top-0 left-0 right-0 z-50 glass border-b border-[var(--color-border)]"
+>
   <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-    <a href="/" class="flex items-center gap-3 group">
-      <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-[#8b5cf6] to-[#06b6d4] flex items-center justify-center text-white font-bold text-lg group-hover:scale-105 transition-transform">
+    <a href="/" class="flex items-center gap-3 group" aria-label="ManHau Home">
+      <div 
+        class="w-9 h-9 rounded-lg bg-gradient-to-br from-[#8b5cf6] to-[#06b6d4] flex items-center justify-center text-white font-bold text-lg group-hover:scale-105 transition-transform"
+        role="img"
+        aria-label="ManHau Logo"
+      >
         M
       </div>
       <span class="text-xl font-bold gradient-text hidden sm:block">
@@ -13,29 +27,67 @@
       </span>
     </a>
     
-    <nav class="flex items-center gap-6">
-      <a href="/" class="text-[var(--color-text-muted)] hover:text-white transition-colors text-sm font-medium">
-        Home
-      </a>
-      <a href="/?q=" class="text-[var(--color-text-muted)] hover:text-white transition-colors text-sm font-medium">
-        Browse
-      </a>
+    <nav class="flex items-center gap-6" aria-label="Main navigation">
+      <ul class="flex items-center gap-6" role="list">
+        <li>
+          <a 
+            href="/" 
+            class="text-[var(--color-text-muted)] hover:text-white transition-colors text-sm font-medium focus-ring"
+          >
+            Home
+          </a>
+        </li>
+        <li>
+          <a 
+            href="/browse" 
+            class="text-[var(--color-text-muted)] hover:text-white transition-colors text-sm font-medium focus-ring"
+          >
+            Browse
+          </a>
+        </li>
+        <li>
+          <a 
+            href="/favorites" 
+            class="text-[var(--color-text-muted)] hover:text-white transition-colors text-sm font-medium focus-ring"
+          >
+            Favorites
+          </a>
+        </li>
+        <li>
+          <a 
+            href="/history" 
+            class="text-[var(--color-text-muted)] hover:text-white transition-colors text-sm font-medium focus-ring"
+          >
+            History
+          </a>
+        </li>
+      </ul>
     </nav>
   </div>
 </header>
 
-<main class="pt-16 min-h-screen bg-[var(--color-bg)]">
+<main 
+  id="main-content" 
+  class="pt-16 min-h-screen bg-[var(--color-bg)]"
+  tabindex="-1"
+>
   {@render children()}
 </main>
 
 <!-- Footer -->
-<footer class="bg-[var(--color-bg-secondary)] border-t border-[var(--color-border)] mt-20">
+<footer 
+  class="bg-[var(--color-bg-secondary)] border-t border-[var(--color-border)] mt-20"
+>
   <div class="max-w-7xl mx-auto px-4 py-12">
     <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
       <!-- Brand -->
       <div class="md:col-span-2">
         <div class="flex items-center gap-3 mb-4">
-          <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-[#8b5cf6] to-[#06b6d4] flex items-center justify-center text-white font-bold text-xl">
+          <div 
+            class="w-10 h-10 rounded-lg bg-gradient-to-br from-[#8b5cf6] to-[#06b6d4] flex items-center justify-center text-white font-bold text-xl"
+            role="img"
+            aria-label="ManHau Logo"
+          >
             M
           </div>
           <span class="text-2xl font-bold gradient-text">
@@ -46,37 +98,54 @@
           Your ultimate destination for reading manga, manhwa, and comics. 
           Enjoy seamless offline reading experience with our PWA.
         </p>
-        <div class="flex gap-4">
-          <a href="#" class="w-10 h-10 rounded-full bg-[var(--color-bg-card)] flex items-center justify-center text-[var(--color-text-muted)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 transition-all">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/></svg>
-          </a>
-          <a href="#" class="w-10 h-10 rounded-full bg-[var(--color-bg-card)] flex items-center justify-center text-[var(--color-text-muted)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 transition-all">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-          </a>
-        </div>
+      <!-- Social Links -->
+      <div class="flex gap-4" role="list" aria-label="Social media links">
+        <a 
+          href="https://twitter.com" 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          aria-label="ManHau on Twitter (opens in new tab)"
+          class="w-10 h-10 rounded-full bg-[var(--color-bg-card)] flex items-center justify-center text-[var(--color-text-muted)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 transition-all focus-ring"
+        >
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/>
+          </svg>
+        </a>
+        <a 
+          href="https://github.com" 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          aria-label="ManHau on GitHub (opens in new tab)"
+          class="w-10 h-10 rounded-full bg-[var(--color-bg-card)] flex items-center justify-center text-[var(--color-text-muted)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 transition-all focus-ring"
+        >
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+          </svg>
+        </a>
+      </div>
       </div>
       
       <!-- Quick Links -->
-      <div>
+      <nav aria-label="Quick links">
         <h4 class="text-white font-semibold mb-4">Quick Links</h4>
-        <ul class="space-y-2">
-          <li><a href="/" class="text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors">Home</a></li>
-          <li><a href="/?q=" class="text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors">Browse</a></li>
-          <li><a href="#" class="text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors">Popular</a></li>
-          <li><a href="#" class="text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors">Latest</a></li>
+        <ul class="space-y-2" role="list">
+          <li><a href="/" class="text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors focus-ring">Home</a></li>
+          <li><a href="/browse" class="text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors focus-ring">Browse</a></li>
+          <li><button type="button" class="text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors bg-transparent border-none cursor-pointer p-0 text-left focus-ring">Popular</button></li>
+          <li><button type="button" class="text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors bg-transparent border-none cursor-pointer p-0 text-left focus-ring">Latest</button></li>
         </ul>
-      </div>
+      </nav>
       
       <!-- Support -->
-      <div>
+      <nav aria-label="Support links">
         <h4 class="text-white font-semibold mb-4">Support</h4>
-        <ul class="space-y-2">
-          <li><a href="#" class="text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors">Help Center</a></li>
-          <li><a href="#" class="text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors">Contact Us</a></li>
-          <li><a href="#" class="text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors">Privacy Policy</a></li>
-          <li><a href="#" class="text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors">Terms of Service</a></li>
+        <ul class="space-y-2" role="list">
+          <li><button type="button" class="text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors bg-transparent border-none cursor-pointer p-0 text-left focus-ring">Help Center</button></li>
+          <li><button type="button" class="text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors bg-transparent border-none cursor-pointer p-0 text-left focus-ring">Contact Us</button></li>
+          <li><button type="button" class="text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors bg-transparent border-none cursor-pointer p-0 text-left focus-ring">Privacy Policy</button></li>
+          <li><button type="button" class="text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors bg-transparent border-none cursor-pointer p-0 text-left focus-ring">Terms of Service</button></li>
         </ul>
-      </div>
+      </nav>
     </div>
     
     <!-- Bottom Bar -->
@@ -85,8 +154,49 @@
         © 2026 ManHau. All rights reserved. Powered by MangaDex API.
       </p>
       <p class="text-[var(--color-text-muted)] text-sm">
-        Made with <span class="text-red-500">❤</span> for manga lovers
+        Made with <span class="text-red-500" aria-label="love">❤</span> for manga lovers
       </p>
     </div>
   </div>
 </footer>
+
+<style>
+  /* Skip link - visible only on focus */
+  .skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--color-primary, #6366f1);
+    color: white;
+    padding: 8px 16px;
+    z-index: 100;
+    transition: top 0.3s;
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: 0 0 8px 0;
+  }
+  
+  .skip-link:focus {
+    top: 0;
+    outline: 2px solid white;
+    outline-offset: 2px;
+  }
+  
+  /* Focus ring utility */
+  .focus-ring:focus {
+    outline: 2px solid var(--color-primary, #6366f1);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  
+  /* Remove focus outline for mouse users */
+  .focus-ring:focus:not(:focus-visible) {
+    outline: none;
+  }
+  
+  .focus-ring:focus-visible {
+    outline: 2px solid var(--color-primary, #6366f1);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+</style>
