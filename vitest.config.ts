@@ -27,6 +27,10 @@ export default defineConfig({
     alias: {
       $lib: "/src/lib",
       "$lib/*": "/src/lib/*",
+      $app: "/src/lib/__mocks__/$app",
+      "$app/environment": "/src/lib/__mocks__/$app/environment.ts",
+      "$app/stores": "/src/lib/__mocks__/$app/stores.ts",
+      "$app/navigation": "/src/lib/__mocks__/$app/navigation.ts",
     },
   },
 });

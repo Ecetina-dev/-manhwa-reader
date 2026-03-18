@@ -119,7 +119,7 @@ export function checkRateLimit(
 
   // Increment counter
   entry.count++;
-  
+
   // Calculate remaining AFTER incrementing
   const remaining = Math.max(0, config.maxRequests - entry.count);
 

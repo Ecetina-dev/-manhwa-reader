@@ -39,8 +39,8 @@ export function sanitizeSql(input: string): string {
  */
 export function sanitizeFilename(input: string): string {
   return input
-    .replace(/[^a-zA-Z0-9._-]/g, "")         // Remove invalid chars completely
-    .replace(/\.{2,}/g, "_")                 // Replace multiple consecutive dots (path traversal)
+    .replace(/[^a-zA-Z0-9._-]/g, "") // Remove invalid chars completely
+    .replace(/\.{2,}/g, "_") // Replace multiple consecutive dots (path traversal)
     .substring(0, 255);
 }
 
