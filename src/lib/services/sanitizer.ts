@@ -39,8 +39,8 @@ export function sanitizeSql(input: string): string {
  */
 export function sanitizeFilename(input: string): string {
   return input
-    .replace(/[^a-zA-Z0-9._-]/g, "_")
-    .replace(/_{2,}/g, "_")
+    .replace(/[^a-zA-Z0-9._-]/g, "")         // Remove invalid chars completely
+    .replace(/\.{2,}/g, "_")                 // Replace multiple consecutive dots (path traversal)
     .substring(0, 255);
 }
 
@@ -66,6 +66,7 @@ export function sanitizeUrl(input: string): string {
 export function sanitizeSearchQuery(input: string): string {
   return input
     .trim()
+    .replace(/<[^>]*>/g, "") // Strip HTML tags first
     .substring(0, 100) // Limit length
     .replace(/[<>\"'&]/g, ""); // Remove dangerous chars
 }
@@ -108,8 +109,9 @@ export function isValidEmail(email: string): boolean {
  */
 export function isValidUrl(url: string): boolean {
   try {
-    new URL(url);
-    return true;
+    const urlObj = new URL(url);
+    // Only allow http and https
+    return ["http:", "https:"].includes(urlObj.protocol);
   } catch {
     return false;
   }

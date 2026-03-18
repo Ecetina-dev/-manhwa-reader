@@ -107,7 +107,6 @@ export function checkRateLimit(
   }
 
   // Check if allowed
-  const remaining = config.maxRequests - entry.count;
   const resetIn = Math.max(0, entry.resetTime - now);
 
   if (entry.count >= config.maxRequests) {
@@ -120,10 +119,13 @@ export function checkRateLimit(
 
   // Increment counter
   entry.count++;
+  
+  // Calculate remaining AFTER incrementing
+  const remaining = Math.max(0, config.maxRequests - entry.count);
 
   return {
     allowed: true,
-    remaining: Math.max(0, remaining),
+    remaining,
     resetIn,
   };
 }

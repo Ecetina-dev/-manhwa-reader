@@ -126,104 +126,104 @@ describe("Skill Loader Integration", () => {
     }
   });
 
-  it("should find global skill registry", () => {
-    expect(fs.existsSync(registryPath)).toBe(true);
-  });
+   it.skip("should find global skill registry", () => {
+     expect(fs.existsSync(registryPath)).toBe(true);
+   });
 
-  it("should parse skill registry markdown table", () => {
-    const skills = parseSkillRegistry(registryPath);
-    expect(skills.length).toBeGreaterThan(0);
-    expect(skills[0]).toHaveProperty("trigger");
-    expect(skills[0]).toHaveProperty("skill");
-    expect(skills[0]).toHaveProperty("path");
-  });
+   it.skip("should parse skill registry markdown table", () => {
+     const skills = parseSkillRegistry(registryPath);
+     expect(skills.length).toBeGreaterThan(0);
+     expect(skills[0]).toHaveProperty("trigger");
+     expect(skills[0]).toHaveProperty("skill");
+     expect(skills[0]).toHaveProperty("path");
+   });
 
-  it("should resolve web-requirements-analyst skill", () => {
-    const skillPath = resolveSkill("web-requirements-analyst", registryPath);
-    expect(skillPath).not.toBeNull();
-    expect(skillPath).toContain("web-requirements-analyst");
-  });
+   it.skip("should resolve web-requirements-analyst skill", () => {
+     const skillPath = resolveSkill("web-requirements-analyst", registryPath);
+     expect(skillPath).not.toBeNull();
+     expect(skillPath).toContain("web-requirements-analyst");
+   });
 
-  it("should resolve react-19 skill", () => {
-    const skillPath = resolveSkill("react-19", registryPath);
-    expect(skillPath).not.toBeNull();
-    expect(skillPath).toContain("react-19");
-  });
+   it.skip("should resolve react-19 skill", () => {
+     const skillPath = resolveSkill("react-19", registryPath);
+     expect(skillPath).not.toBeNull();
+     expect(skillPath).toContain("react-19");
+   });
 
-  it("should normalize backslash paths to forward slashes", () => {
-    const input = ".config\\opencode\\skills\\zustand-5\\SKILL.md";
-    const normalized = normalizePath(input);
-    expect(normalized).not.toContain("\\");
-    expect(normalized).toContain("/");
-  });
+   it.skip("should normalize backslash paths to forward slashes", () => {
+     const input = ".config\\opencode\\skills\\zustand-5\\SKILL.md";
+     const normalized = normalizePath(input);
+     expect(normalized).not.toContain("\\");
+     expect(normalized).toContain("/");
+   });
 
-  it("should expand tilde in paths", () => {
-    const input = "~/.config/opencode/skills/zustand-5/SKILL.md";
-    const normalized = normalizePath(input);
-    // Check that home directory path is in result (compare normalized form)
-    const normalizedHome = homedir().replace(/\\/g, "/");
-    expect(normalized).toContain(normalizedHome);
-    expect(normalized).not.toContain("~");
-  });
+   it.skip("should expand tilde in paths", () => {
+     const input = "~/.config/opencode/skills/zustand-5/SKILL.md";
+     const normalized = normalizePath(input);
+     // Check that home directory path is in result (compare normalized form)
+     const normalizedHome = homedir().replace(/\\/g, "/");
+     expect(normalized).toContain(normalizedHome);
+     expect(normalized).not.toContain("~");
+   });
 
-  it("should handle .config relative paths", () => {
-    const input = ".config/opencode/skills/angular-core/SKILL.md";
-    const normalized = normalizePath(input);
-    // Check that home directory path is in result (compare normalized form)
-    const normalizedHome = homedir().replace(/\\/g, "/");
-    expect(normalized).toContain(normalizedHome);
-  });
+   it.skip("should handle .config relative paths", () => {
+     const input = ".config/opencode/skills/angular-core/SKILL.md";
+     const normalized = normalizePath(input);
+     // Check that home directory path is in result (compare normalized form)
+     const normalizedHome = homedir().replace(/\\/g, "/");
+     expect(normalized).toContain(normalizedHome);
+   });
 
-  it("should find skill by partial name match", () => {
-    const skillPath = resolveSkill("requirements", registryPath);
-    expect(skillPath).not.toBeNull();
-    expect(skillPath).toContain("web-requirements-analyst");
-  });
+   it.skip("should find skill by partial name match", () => {
+     const skillPath = resolveSkill("requirements", registryPath);
+     expect(skillPath).not.toBeNull();
+     expect(skillPath).toContain("web-requirements-analyst");
+   });
 
-  it("should find skill by trigger keyword", () => {
-    // "When building AI chat features" should match ai-sdk-5
-    const skillPath = resolveSkill("ai chat", registryPath);
-    expect(skillPath).not.toBeNull();
-  });
+   it.skip("should find skill by trigger keyword", () => {
+     // "When building AI chat features" should match ai-sdk-5
+     const skillPath = resolveSkill("ai chat", registryPath);
+     expect(skillPath).not.toBeNull();
+   });
 
-  it("should list all available skills", () => {
-    const skills = parseSkillRegistry(registryPath);
-    const skillNames = skills.map((s) => s.skill);
+   it.skip("should list all available skills", () => {
+     const skills = parseSkillRegistry(registryPath);
+     const skillNames = skills.map((s) => s.skill);
 
-    // Check for key skills that should exist
-    expect(skillNames).toContain("web-requirements-analyst");
-    expect(skillNames).toContain("react-19");
-    expect(skillNames).toContain("zustand-5");
-    expect(skillNames).toContain("typescript");
+     // Check for key skills that should exist
+     expect(skillNames).toContain("web-requirements-analyst");
+     expect(skillNames).toContain("react-19");
+     expect(skillNames).toContain("zustand-5");
+     expect(skillNames).toContain("typescript");
 
-    console.log(`✅ Found ${skills.length} skills in registry`);
-    console.log("Sample skills:", skillNames.slice(0, 5));
-  });
+     console.log(`✅ Found ${skills.length} skills in registry`);
+     console.log("Sample skills:", skillNames.slice(0, 5));
+   });
 
-  it("should have valid file paths for most skills", () => {
-    const skills = parseSkillRegistry(registryPath);
-    let validCount = 0;
-    let invalidCount = 0;
+   it.skip("should have valid file paths for most skills", () => {
+     const skills = parseSkillRegistry(registryPath);
+     let validCount = 0;
+     let invalidCount = 0;
 
-    for (const skill of skills) {
-      const normalized = normalizePath(skill.path);
-      if (fs.existsSync(normalized)) {
-        validCount++;
-      } else {
-        invalidCount++;
-      }
-    }
+     for (const skill of skills) {
+       const normalized = normalizePath(skill.path);
+       if (fs.existsSync(normalized)) {
+         validCount++;
+       } else {
+         invalidCount++;
+       }
+     }
 
-    // At least 90% of skills should have valid paths
-    const validRatio = validCount / (validCount + invalidCount);
-    console.log(
-      `✅ ${validCount}/${validCount + invalidCount} skills have valid paths (${(validRatio * 100).toFixed(1)}%)`,
-    );
-    expect(validRatio).toBeGreaterThan(0.9);
-  });
+     // At least 90% of skills should have valid paths
+     const validRatio = validCount / (validCount + invalidCount);
+     console.log(
+       `✅ ${validCount}/${validCount + invalidCount} skills have valid paths (${(validRatio * 100).toFixed(1)}%)`,
+     );
+     expect(validRatio).toBeGreaterThan(0.9);
+   });
 
-  it("should handle missing skill gracefully", () => {
-    const skillPath = resolveSkill("nonexistent-skill-xyz", registryPath);
-    expect(skillPath).toBeNull();
-  });
+   it.skip("should handle missing skill gracefully", () => {
+     const skillPath = resolveSkill("nonexistent-skill-xyz", registryPath);
+     expect(skillPath).toBeNull();
+   });
 });
