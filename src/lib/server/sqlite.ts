@@ -1,6 +1,6 @@
 /**
  * SQLite Database for Manga/Manhwa/Comic Reader
- * 
+ *
  * Why SQLite?
  * - Free and open source
  * - Embedded (no server needed)
@@ -10,12 +10,12 @@
  * - Perfect for small to medium sites
  */
 
-import Database from 'better-sqlite3';
-import { join } from 'path';
-import { existsSync, mkdirSync } from 'fs';
+import Database from "better-sqlite3";
+import { join } from "path";
+import { existsSync, mkdirSync } from "fs";
 
-const DB_DIR = join(process.cwd(), '.data');
-const DB_FILE = join(DB_DIR, 'manhau.db');
+const DB_DIR = join(process.cwd(), ".data");
+const DB_FILE = join(DB_DIR, "manhau.db");
 
 // Ensure database directory exists
 if (!existsSync(DB_DIR)) {
@@ -24,7 +24,7 @@ if (!existsSync(DB_DIR)) {
 
 // Initialize database
 const db = new Database(DB_FILE);
-db.pragma('journal_mode = WAL');
+db.pragma("journal_mode = WAL");
 
 // Create tables
 db.exec(`
@@ -120,6 +120,40 @@ db.exec(`
     FOREIGN KEY (chapter_id) REFERENCES chapters(id) ON DELETE CASCADE
   );
   
+  -- Collections table (user-created lists)
+  CREATE TABLE IF NOT EXISTS collections (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT,
+    is_public INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+  );
+  
+  -- Collection items (manga in collections)
+  CREATE TABLE IF NOT EXISTS collection_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    collection_id INTEGER NOT NULL,
+    manga_id INTEGER NOT NULL,
+    added_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (collection_id) REFERENCES collections(id) ON DELETE CASCADE,
+    FOREIGN KEY (manga_id) REFERENCES manga(id) ON DELETE CASCADE,
+    UNIQUE(collection_id, manga_id)
+  );
+  
+  -- Reading statistics
+  CREATE TABLE IF NOT EXISTS reading_stats (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    manga_id INTEGER NOT NULL,
+    chapters_read INTEGER DEFAULT 0,
+    pages_read INTEGER DEFAULT 0,
+    time_spent INTEGER DEFAULT 0,
+    last_read_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (manga_id) REFERENCES manga(id) ON DELETE CASCADE
+  );
+  
   -- Create indexes for better performance
   CREATE INDEX IF NOT EXISTS idx_manga_title ON manga(title);
   CREATE INDEX IF NOT EXISTS idx_manga_status ON manga(status);
@@ -139,6 +173,10 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_ratings_user ON ratings(user_id);
   CREATE INDEX IF NOT EXISTS idx_favorites_user ON favorites(user_id);
   CREATE INDEX IF NOT EXISTS idx_history_user ON reading_history(user_id, created_at DESC);
+  CREATE INDEX IF NOT EXISTS idx_collections_user ON collections(user_id);
+  CREATE INDEX IF NOT EXISTS idx_collection_items_collection ON collection_items(collection_id);
+  CREATE INDEX IF NOT EXISTS idx_collection_items_manga ON collection_items(manga_id);
+  CREATE INDEX IF NOT EXISTS idx_stats_user ON reading_stats(user_id);
   
   -- Enable WAL mode for better concurrent performance
   PRAGMA journal_mode = WAL;
@@ -149,7 +187,7 @@ db.exec(`
   PRAGMA temp_store = MEMORY;
 `);
 
-console.log('✅ SQLite database initialized');
+console.log("✅ SQLite database initialized");
 
 // Types
 export interface Manga {
@@ -157,8 +195,8 @@ export interface Manga {
   title: string;
   description: string;
   cover: string;
-  status: 'ongoing' | 'completed' | 'hiatus' | 'cancelled';
-  type: 'manga' | 'manhwa' | 'manhua' | 'comic';
+  status: "ongoing" | "completed" | "hiatus" | "cancelled";
+  type: "manga" | "manhwa" | "manhua" | "comic";
   author: string;
   artist: string;
   tags: string;
@@ -230,7 +268,7 @@ export interface ReadingHistory {
 function rowToManga(row: any): Manga {
   return {
     ...row,
-    tags: row.tags ? JSON.parse(row.tags) : []
+    tags: row.tags ? JSON.parse(row.tags) : [],
   };
 }
 
@@ -246,80 +284,82 @@ export function getAllManga(options?: {
   limit?: number;
   offset?: number;
 }): Manga[] {
-  let sql = 'SELECT * FROM manga WHERE 1=1';
+  let sql = "SELECT * FROM manga WHERE 1=1";
   const params: any[] = [];
-  
+
   if (options?.search) {
-    sql += ' AND title LIKE ?';
+    sql += " AND title LIKE ?";
     params.push(`%${options.search}%`);
   }
-  
+
   if (options?.status) {
-    sql += ' AND status = ?';
+    sql += " AND status = ?";
     params.push(options.status);
   }
-  
+
   if (options?.type) {
-    sql += ' AND type = ?';
+    sql += " AND type = ?";
     params.push(options.type);
   }
-  
+
   if (options?.demographic) {
-    sql += ' AND demographic = ?';
+    sql += " AND demographic = ?";
     params.push(options.demographic);
   }
-  
+
   if (options?.tags) {
-    sql += ' AND tags LIKE ?';
+    sql += " AND tags LIKE ?";
     params.push(`%${options.tags}%`);
   }
-  
+
   // Sorting
-  const sort = options?.sort || 'updated';
+  const sort = options?.sort || "updated";
   switch (sort) {
-    case 'newest':
-      sql += ' ORDER BY created_at DESC';
+    case "newest":
+      sql += " ORDER BY created_at DESC";
       break;
-    case 'oldest':
-      sql += ' ORDER BY created_at ASC';
+    case "oldest":
+      sql += " ORDER BY created_at ASC";
       break;
-    case 'title':
-      sql += ' ORDER BY title ASC';
+    case "title":
+      sql += " ORDER BY title ASC";
       break;
-    case 'rating':
-      sql += ' ORDER BY rating DESC';
+    case "rating":
+      sql += " ORDER BY rating DESC";
       break;
-    case 'views':
-      sql += ' ORDER BY views DESC';
+    case "views":
+      sql += " ORDER BY views DESC";
       break;
     default:
-      sql += ' ORDER BY updated_at DESC';
+      sql += " ORDER BY updated_at DESC";
   }
-  
+
   if (options?.limit) {
-    sql += ' LIMIT ?';
+    sql += " LIMIT ?";
     params.push(options.limit);
-    
+
     if (options?.offset) {
-      sql += ' OFFSET ?';
+      sql += " OFFSET ?";
       params.push(options.offset);
     }
   }
-  
+
   const stmt = db.prepare(sql);
   const rows = stmt.all(...params);
   return rows.map(rowToManga);
 }
 
 export function getMangaById(id: number): Manga | null {
-  const stmt = db.prepare('SELECT * FROM manga WHERE id = ?');
+  const stmt = db.prepare("SELECT * FROM manga WHERE id = ?");
   const row = stmt.get(id);
   return row ? rowToManga(row) : null;
 }
 
 export function getMangaBySlug(slug: string): Manga | null {
-  const stmt = db.prepare('SELECT * FROM manga WHERE LOWER(REPLACE(title, " ", "-")) = ?');
-  const row = stmt.get(slug.toLowerCase().replace(/ /g, '-'));
+  const stmt = db.prepare(
+    'SELECT * FROM manga WHERE LOWER(REPLACE(title, " ", "-")) = ?',
+  );
+  const row = stmt.get(slug.toLowerCase().replace(/ /g, "-"));
   return row ? rowToManga(row) : null;
 }
 
@@ -339,51 +379,81 @@ export function createManga(data: {
     INSERT INTO manga (title, description, cover, status, type, author, artist, tags, original_language, demographic)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
-  
+
   const result = stmt.run(
     data.title,
-    data.description || '',
-    data.cover || '',
-    data.status || 'ongoing',
-    data.type || 'manga',
-    data.author || '',
-    data.artist || '',
-    data.tags ? JSON.stringify(data.tags) : '[]',
-    data.original_language || 'ja',
-    data.demographic || 'shonen'
+    data.description || "",
+    data.cover || "",
+    data.status || "ongoing",
+    data.type || "manga",
+    data.author || "",
+    data.artist || "",
+    data.tags ? JSON.stringify(data.tags) : "[]",
+    data.original_language || "ja",
+    data.demographic || "shonen",
   );
-  
+
   return getMangaById(result.lastInsertRowid as number)!;
 }
 
 export function updateManga(id: number, data: Partial<Manga>): Manga | null {
   const fields: string[] = [];
   const values: any[] = [];
-  
-  if (data.title !== undefined) { fields.push('title = ?'); values.push(data.title); }
-  if (data.description !== undefined) { fields.push('description = ?'); values.push(data.description); }
-  if (data.cover !== undefined) { fields.push('cover = ?'); values.push(data.cover); }
-  if (data.status !== undefined) { fields.push('status = ?'); values.push(data.status); }
-  if (data.type !== undefined) { fields.push('type = ?'); values.push(data.type); }
-  if (data.author !== undefined) { fields.push('author = ?'); values.push(data.author); }
-  if (data.artist !== undefined) { fields.push('artist = ?'); values.push(data.artist); }
-  if (data.tags !== undefined) { fields.push('tags = ?'); values.push(JSON.stringify(data.tags)); }
-  if (data.demographic !== undefined) { fields.push('demographic = ?'); values.push(data.demographic); }
-  if (data.original_language !== undefined) { fields.push('original_language = ?'); values.push(data.original_language); }
-  
+
+  if (data.title !== undefined) {
+    fields.push("title = ?");
+    values.push(data.title);
+  }
+  if (data.description !== undefined) {
+    fields.push("description = ?");
+    values.push(data.description);
+  }
+  if (data.cover !== undefined) {
+    fields.push("cover = ?");
+    values.push(data.cover);
+  }
+  if (data.status !== undefined) {
+    fields.push("status = ?");
+    values.push(data.status);
+  }
+  if (data.type !== undefined) {
+    fields.push("type = ?");
+    values.push(data.type);
+  }
+  if (data.author !== undefined) {
+    fields.push("author = ?");
+    values.push(data.author);
+  }
+  if (data.artist !== undefined) {
+    fields.push("artist = ?");
+    values.push(data.artist);
+  }
+  if (data.tags !== undefined) {
+    fields.push("tags = ?");
+    values.push(JSON.stringify(data.tags));
+  }
+  if (data.demographic !== undefined) {
+    fields.push("demographic = ?");
+    values.push(data.demographic);
+  }
+  if (data.original_language !== undefined) {
+    fields.push("original_language = ?");
+    values.push(data.original_language);
+  }
+
   if (fields.length === 0) return getMangaById(id);
-  
+
   fields.push("updated_at = datetime('now')");
   values.push(id);
-  
-  const stmt = db.prepare(`UPDATE manga SET ${fields.join(', ')} WHERE id = ?`);
+
+  const stmt = db.prepare(`UPDATE manga SET ${fields.join(", ")} WHERE id = ?`);
   stmt.run(...values);
-  
+
   return getMangaById(id);
 }
 
 export function deleteManga(id: number): boolean {
-  const stmt = db.prepare('DELETE FROM manga WHERE id = ?');
+  const stmt = db.prepare("DELETE FROM manga WHERE id = ?");
   const result = stmt.run(id);
   return result.changes > 0;
 }
@@ -391,23 +461,32 @@ export function deleteManga(id: number): boolean {
 // ============== CHAPTER OPERATIONS ==============
 
 export function getChaptersByManga(mangaId: number): Chapter[] {
-  const stmt = db.prepare('SELECT * FROM chapters WHERE manga_id = ? ORDER BY CAST(chapter_number AS REAL) DESC');
+  const stmt = db.prepare(
+    "SELECT * FROM chapters WHERE manga_id = ? ORDER BY CAST(chapter_number AS REAL) DESC",
+  );
   return stmt.all(mangaId) as Chapter[];
 }
 
 export function getChapterCount(mangaId: number): number {
-  const stmt = db.prepare('SELECT COUNT(*) as count FROM chapters WHERE manga_id = ?');
+  const stmt = db.prepare(
+    "SELECT COUNT(*) as count FROM chapters WHERE manga_id = ?",
+  );
   const result = stmt.get(mangaId) as { count: number };
   return result.count;
 }
 
 export function getChapterById(id: number): Chapter | null {
-  const stmt = db.prepare('SELECT * FROM chapters WHERE id = ?');
+  const stmt = db.prepare("SELECT * FROM chapters WHERE id = ?");
   return stmt.get(id) as Chapter | null;
 }
 
-export function getChapterByNumber(mangaId: number, chapterNumber: string): Chapter | null {
-  const stmt = db.prepare('SELECT * FROM chapters WHERE manga_id = ? AND chapter_number = ?');
+export function getChapterByNumber(
+  mangaId: number,
+  chapterNumber: string,
+): Chapter | null {
+  const stmt = db.prepare(
+    "SELECT * FROM chapters WHERE manga_id = ? AND chapter_number = ?",
+  );
   return stmt.get(mangaId, chapterNumber) as Chapter | null;
 }
 
@@ -421,22 +500,24 @@ export function createChapter(data: {
     INSERT INTO chapters (manga_id, chapter_number, title, volume)
     VALUES (?, ?, ?, ?)
   `);
-  
+
   const result = stmt.run(
     data.manga_id,
     data.chapter_number,
-    data.title || '',
-    data.volume || ''
+    data.title || "",
+    data.volume || "",
   );
-  
+
   // Update manga timestamp
-  db.prepare("UPDATE manga SET updated_at = datetime('now') WHERE id = ?").run(data.manga_id);
-  
+  db.prepare("UPDATE manga SET updated_at = datetime('now') WHERE id = ?").run(
+    data.manga_id,
+  );
+
   return getChapterById(result.lastInsertRowid as number)!;
 }
 
 export function deleteChapter(id: number): boolean {
-  const stmt = db.prepare('DELETE FROM chapters WHERE id = ?');
+  const stmt = db.prepare("DELETE FROM chapters WHERE id = ?");
   const result = stmt.run(id);
   return result.changes > 0;
 }
@@ -444,22 +525,35 @@ export function deleteChapter(id: number): boolean {
 // ============== PAGE OPERATIONS ==============
 
 export function getChapterPages(chapterId: number): ChapterPage[] {
-  const stmt = db.prepare('SELECT * FROM chapter_pages WHERE chapter_id = ? ORDER BY page_number ASC');
+  const stmt = db.prepare(
+    "SELECT * FROM chapter_pages WHERE chapter_id = ? ORDER BY page_number ASC",
+  );
   return stmt.all(chapterId) as ChapterPage[];
 }
 
-export function addChapterPages(chapterId: number, mangaId: number, pages: Array<{ url: string; width?: number; height?: number }>): ChapterPage[] {
+export function addChapterPages(
+  chapterId: number,
+  mangaId: number,
+  pages: Array<{ url: string; width?: number; height?: number }>,
+): ChapterPage[] {
   const stmt = db.prepare(`
     INSERT INTO chapter_pages (chapter_id, manga_id, page_number, url, width, height)
     VALUES (?, ?, ?, ?, ?, ?)
   `);
-  
+
   const insertedPages: ChapterPage[] = [];
-  
+
   const transaction = db.transaction((pagesArray: typeof pages) => {
     for (let i = 0; i < pagesArray.length; i++) {
       const page = pagesArray[i];
-      const result = stmt.run(chapterId, mangaId, i + 1, page.url, page.width || 0, page.height || 0);
+      const result = stmt.run(
+        chapterId,
+        mangaId,
+        i + 1,
+        page.url,
+        page.width || 0,
+        page.height || 0,
+      );
       insertedPages.push({
         id: result.lastInsertRowid as number,
         chapter_id: chapterId,
@@ -468,20 +562,23 @@ export function addChapterPages(chapterId: number, mangaId: number, pages: Array
         url: page.url,
         width: page.width || 0,
         height: page.height || 0,
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
       });
     }
-    
+
     // Update chapter page count
-    db.prepare('UPDATE chapters SET pages = ? WHERE id = ?').run(pagesArray.length, chapterId);
+    db.prepare("UPDATE chapters SET pages = ? WHERE id = ?").run(
+      pagesArray.length,
+      chapterId,
+    );
   });
-  
+
   transaction(pages);
   return insertedPages;
 }
 
 export function deleteChapterPages(chapterId: number): boolean {
-  const stmt = db.prepare('DELETE FROM chapter_pages WHERE chapter_id = ?');
+  const stmt = db.prepare("DELETE FROM chapter_pages WHERE chapter_id = ?");
   const result = stmt.run(chapterId);
   return result.changes > 0;
 }
@@ -489,7 +586,9 @@ export function deleteChapterPages(chapterId: number): boolean {
 // ============== COMMENTS ==============
 
 export function getCommentsByManga(mangaId: number): Comment[] {
-  const stmt = db.prepare('SELECT * FROM comments WHERE manga_id = ? ORDER BY created_at DESC LIMIT 100');
+  const stmt = db.prepare(
+    "SELECT * FROM comments WHERE manga_id = ? ORDER BY created_at DESC LIMIT 100",
+  );
   return stmt.all(mangaId) as Comment[];
 }
 
@@ -503,36 +602,51 @@ export function createComment(data: {
     INSERT INTO comments (manga_id, user_id, user_name, content)
     VALUES (?, ?, ?, ?)
   `);
-  
+
   const result = stmt.run(
     data.manga_id,
     data.user_id,
-    data.user_name || 'Anonymous',
-    data.content
+    data.user_name || "Anonymous",
+    data.content,
   );
-  
-  return db.prepare('SELECT * FROM comments WHERE id = ?').get(result.lastInsertRowid) as Comment;
+
+  return db
+    .prepare("SELECT * FROM comments WHERE id = ?")
+    .get(result.lastInsertRowid) as Comment;
 }
 
 export function deleteComment(id: number, userId: string): boolean {
-  const stmt = db.prepare('DELETE FROM comments WHERE id = ? AND user_id = ?');
+  const stmt = db.prepare("DELETE FROM comments WHERE id = ? AND user_id = ?");
   const result = stmt.run(id, userId);
   return result.changes > 0;
 }
 
 // ============== RATINGS ==============
 
-export function getRatingByManga(mangaId: number): { average: number; count: number; userRating?: number } {
-  const stats = db.prepare('SELECT AVG(rating) as average, COUNT(*) as count FROM ratings WHERE manga_id = ?').get(mangaId) as { average: number | null; count: number };
-  
+export function getRatingByManga(mangaId: number): {
+  average: number;
+  count: number;
+  userRating?: number;
+} {
+  const stats = db
+    .prepare(
+      "SELECT AVG(rating) as average, COUNT(*) as count FROM ratings WHERE manga_id = ?",
+    )
+    .get(mangaId) as { average: number | null; count: number };
+
   return {
     average: stats.average ? Math.round(stats.average * 10) / 10 : 0,
-    count: stats.count
+    count: stats.count,
   };
 }
 
-export function getRatingByUser(mangaId: number, userId: string): number | null {
-  const result = db.prepare('SELECT rating FROM ratings WHERE manga_id = ? AND user_id = ?').get(mangaId, userId) as { rating: number } | undefined;
+export function getRatingByUser(
+  mangaId: number,
+  userId: string,
+): number | null {
+  const result = db
+    .prepare("SELECT rating FROM ratings WHERE manga_id = ? AND user_id = ?")
+    .get(mangaId, userId) as { rating: number } | undefined;
   return result?.rating || null;
 }
 
@@ -542,58 +656,84 @@ export function setRating(data: {
   rating: number;
 }): { average: number; count: number } {
   // Upsert rating
-  const existing = db.prepare('SELECT id FROM ratings WHERE manga_id = ? AND user_id = ?').get(data.manga_id, data.user_id);
-  
+  const existing = db
+    .prepare("SELECT id FROM ratings WHERE manga_id = ? AND user_id = ?")
+    .get(data.manga_id, data.user_id);
+
   if (existing) {
-    db.prepare('UPDATE ratings SET rating = ? WHERE manga_id = ? AND user_id = ?').run(data.rating, data.manga_id, data.user_id);
+    db.prepare(
+      "UPDATE ratings SET rating = ? WHERE manga_id = ? AND user_id = ?",
+    ).run(data.rating, data.manga_id, data.user_id);
   } else {
-    db.prepare('INSERT INTO ratings (manga_id, user_id, rating) VALUES (?, ?, ?)').run(data.manga_id, data.user_id, data.rating);
+    db.prepare(
+      "INSERT INTO ratings (manga_id, user_id, rating) VALUES (?, ?, ?)",
+    ).run(data.manga_id, data.user_id, data.rating);
   }
-  
+
   // Update manga's average rating
-  const stats = db.prepare('SELECT AVG(rating) as average, COUNT(*) as count FROM ratings WHERE manga_id = ?').get(data.manga_id) as { average: number | null; count: number };
-  db.prepare('UPDATE manga SET rating = ?, rating_count = ? WHERE id = ?').run(stats.average || 0, stats.count, data.manga_id);
-  
+  const stats = db
+    .prepare(
+      "SELECT AVG(rating) as average, COUNT(*) as count FROM ratings WHERE manga_id = ?",
+    )
+    .get(data.manga_id) as { average: number | null; count: number };
+  db.prepare("UPDATE manga SET rating = ?, rating_count = ? WHERE id = ?").run(
+    stats.average || 0,
+    stats.count,
+    data.manga_id,
+  );
+
   return {
     average: stats.average ? Math.round(stats.average * 10) / 10 : 0,
-    count: stats.count
+    count: stats.count,
   };
 }
 
 // ============== FAVORITES ==============
 
-export function getFavoritesByUser(userId: string): (Favorite & { manga: Manga & { chapters: any[] } })[] {
-  const favorites = db.prepare('SELECT * FROM favorites WHERE user_id = ? ORDER BY created_at DESC').all(userId) as Favorite[];
-  
-  return favorites.map(fav => {
-    const manga = getMangaById(fav.manga_id);
-    if (!manga) return null;
-    
-    const chapters = getChaptersByManga(fav.manga_id);
-    return { 
-      ...fav, 
-      manga: { 
-        ...manga, 
-        chapters: chapters.map(ch => ({
-          id: String(ch.id),
-          number: ch.chapter_number,
-          title: ch.title || '',
-          pages: ch.pages,
-          publishAt: ch.publish_at
-        }))
-      } 
-    };
-  }).filter(f => f !== null);
+export function getFavoritesByUser(
+  userId: string,
+): (Favorite & { manga: Manga & { chapters: any[] } })[] {
+  const favorites = db
+    .prepare(
+      "SELECT * FROM favorites WHERE user_id = ? ORDER BY created_at DESC",
+    )
+    .all(userId) as Favorite[];
+
+  return favorites
+    .map((fav) => {
+      const manga = getMangaById(fav.manga_id);
+      if (!manga) return null;
+
+      const chapters = getChaptersByManga(fav.manga_id);
+      return {
+        ...fav,
+        manga: {
+          ...manga,
+          chapters: chapters.map((ch) => ({
+            id: String(ch.id),
+            number: ch.chapter_number,
+            title: ch.title || "",
+            pages: ch.pages,
+            publishAt: ch.publish_at,
+          })),
+        },
+      };
+    })
+    .filter((f) => f !== null);
 }
 
 export function isFavorite(mangaId: number, userId: string): boolean {
-  const result = db.prepare('SELECT id FROM favorites WHERE manga_id = ? AND user_id = ?').get(mangaId, userId);
+  const result = db
+    .prepare("SELECT id FROM favorites WHERE manga_id = ? AND user_id = ?")
+    .get(mangaId, userId);
   return !!result;
 }
 
 export function addFavorite(mangaId: number, userId: string): boolean {
   try {
-    db.prepare('INSERT OR IGNORE INTO favorites (manga_id, user_id) VALUES (?, ?)').run(mangaId, userId);
+    db.prepare(
+      "INSERT OR IGNORE INTO favorites (manga_id, user_id) VALUES (?, ?)",
+    ).run(mangaId, userId);
     return true;
   } catch {
     return false;
@@ -601,16 +741,25 @@ export function addFavorite(mangaId: number, userId: string): boolean {
 }
 
 export function removeFavorite(mangaId: number, userId: string): boolean {
-  const result = db.prepare('DELETE FROM favorites WHERE manga_id = ? AND user_id = ?').run(mangaId, userId);
+  const result = db
+    .prepare("DELETE FROM favorites WHERE manga_id = ? AND user_id = ?")
+    .run(mangaId, userId);
   return result.changes > 0;
 }
 
 // ============== READING HISTORY ==============
 
-export function getHistoryByUser(userId: string, limit: number = 50): (ReadingHistory & { manga: Manga | null; chapter: Chapter | null })[] {
-  const history = db.prepare('SELECT * FROM reading_history WHERE user_id = ? ORDER BY created_at DESC LIMIT ?').all(userId, limit) as ReadingHistory[];
-  
-  return history.map(h => {
+export function getHistoryByUser(
+  userId: string,
+  limit: number = 50,
+): (ReadingHistory & { manga: Manga | null; chapter: Chapter | null })[] {
+  const history = db
+    .prepare(
+      "SELECT * FROM reading_history WHERE user_id = ? ORDER BY created_at DESC LIMIT ?",
+    )
+    .all(userId, limit) as ReadingHistory[];
+
+  return history.map((h) => {
     const manga = getMangaById(h.manga_id);
     const chapter = getChapterById(h.chapter_id);
     return { ...h, manga, chapter };
@@ -624,17 +773,25 @@ export function addToHistory(data: {
   page?: number;
 }): ReadingHistory {
   // Remove old entry for same manga/chapter if exists
-  db.prepare('DELETE FROM reading_history WHERE manga_id = ? AND chapter_id = ? AND user_id = ?').run(data.manga_id, data.chapter_id, data.user_id);
-  
+  db.prepare(
+    "DELETE FROM reading_history WHERE manga_id = ? AND chapter_id = ? AND user_id = ?",
+  ).run(data.manga_id, data.chapter_id, data.user_id);
+
   const stmt = db.prepare(`
     INSERT INTO reading_history (manga_id, chapter_id, user_id, page)
     VALUES (?, ?, ?, ?)
   `);
-  
-  const result = stmt.run(data.manga_id, data.chapter_id, data.user_id, data.page || 0);
-  
+
+  const result = stmt.run(
+    data.manga_id,
+    data.chapter_id,
+    data.user_id,
+    data.page || 0,
+  );
+
   // Keep only last 100 entries per user
-  db.prepare(`
+  db.prepare(
+    `
     DELETE FROM reading_history 
     WHERE user_id = ? 
     AND id NOT IN (
@@ -643,13 +800,18 @@ export function addToHistory(data: {
       ORDER BY created_at DESC 
       LIMIT 100
     )
-  `).run(data.user_id, data.user_id);
-  
-  return db.prepare('SELECT * FROM reading_history WHERE id = ?').get(result.lastInsertRowid) as ReadingHistory;
+  `,
+  ).run(data.user_id, data.user_id);
+
+  return db
+    .prepare("SELECT * FROM reading_history WHERE id = ?")
+    .get(result.lastInsertRowid) as ReadingHistory;
 }
 
 export function clearHistory(userId: string): boolean {
-  const result = db.prepare('DELETE FROM reading_history WHERE user_id = ?').run(userId);
+  const result = db
+    .prepare("DELETE FROM reading_history WHERE user_id = ?")
+    .run(userId);
   return result.changes > 0;
 }
 
@@ -661,15 +823,29 @@ export function getStats(): {
   totalPages: number;
   mangaByStatus: Record<string, number>;
 } {
-  const mangaCount = db.prepare('SELECT COUNT(*) as count FROM manga').get() as { count: number };
-  const chapterCount = db.prepare('SELECT COUNT(*) as count FROM chapters').get() as { count: number };
-  const pageCount = db.prepare('SELECT COUNT(*) as count FROM chapter_pages').get() as { count: number };
-  
-  const ongoing = db.prepare("SELECT COUNT(*) as count FROM manga WHERE status = 'ongoing'").get() as { count: number };
-  const completed = db.prepare("SELECT COUNT(*) as count FROM manga WHERE status = 'completed'").get() as { count: number };
-  const hiatus = db.prepare("SELECT COUNT(*) as count FROM manga WHERE status = 'hiatus'").get() as { count: number };
-  const cancelled = db.prepare("SELECT COUNT(*) as count FROM manga WHERE status = 'cancelled'").get() as { count: number };
-  
+  const mangaCount = db
+    .prepare("SELECT COUNT(*) as count FROM manga")
+    .get() as { count: number };
+  const chapterCount = db
+    .prepare("SELECT COUNT(*) as count FROM chapters")
+    .get() as { count: number };
+  const pageCount = db
+    .prepare("SELECT COUNT(*) as count FROM chapter_pages")
+    .get() as { count: number };
+
+  const ongoing = db
+    .prepare("SELECT COUNT(*) as count FROM manga WHERE status = 'ongoing'")
+    .get() as { count: number };
+  const completed = db
+    .prepare("SELECT COUNT(*) as count FROM manga WHERE status = 'completed'")
+    .get() as { count: number };
+  const hiatus = db
+    .prepare("SELECT COUNT(*) as count FROM manga WHERE status = 'hiatus'")
+    .get() as { count: number };
+  const cancelled = db
+    .prepare("SELECT COUNT(*) as count FROM manga WHERE status = 'cancelled'")
+    .get() as { count: number };
+
   return {
     totalManga: mangaCount.count,
     totalChapters: chapterCount.count,
@@ -678,43 +854,381 @@ export function getStats(): {
       ongoing: ongoing.count,
       completed: completed.count,
       hiatus: hiatus.count,
-      cancelled: cancelled.count
-    }
+      cancelled: cancelled.count,
+    },
   };
+}
+
+// ============== COLLECTIONS ==============
+
+interface Collection {
+  id: number;
+  user_id: string;
+  name: string;
+  description: string | null;
+  is_public: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export function createCollection(
+  userId: string,
+  name: string,
+  description?: string,
+  isPublic = false,
+): Collection | null {
+  try {
+    const stmt = db.prepare(`
+      INSERT INTO collections (user_id, name, description, is_public)
+      VALUES (?, ?, ?, ?)
+    `);
+    const result = stmt.run(
+      userId,
+      name,
+      description || null,
+      isPublic ? 1 : 0,
+    );
+    return getCollectionById(result.lastInsertRowid as number);
+  } catch {
+    return null;
+  }
+}
+
+export function getCollectionById(id: number): Collection | null {
+  const stmt = db.prepare("SELECT * FROM collections WHERE id = ?");
+  return stmt.get(id) as Collection | null;
+}
+
+export function getUserCollections(userId: string): Collection[] {
+  const stmt = db.prepare(
+    "SELECT * FROM collections WHERE user_id = ? ORDER BY updated_at DESC",
+  );
+  return stmt.all(userId) as Collection[];
+}
+
+export function addToCollection(
+  collectionId: number,
+  mangaId: number,
+): boolean {
+  try {
+    db.prepare(
+      "INSERT OR IGNORE INTO collection_items (collection_id, manga_id) VALUES (?, ?)",
+    ).run(collectionId, mangaId);
+    db.prepare(
+      'UPDATE collections SET updated_at = datetime("now") WHERE id = ?',
+    ).run(collectionId);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function removeFromCollection(
+  collectionId: number,
+  mangaId: number,
+): boolean {
+  try {
+    db.prepare(
+      "DELETE FROM collection_items WHERE collection_id = ? AND manga_id = ?",
+    ).run(collectionId, mangaId);
+    db.prepare(
+      'UPDATE collections SET updated_at = datetime("now") WHERE id = ?',
+    ).run(collectionId);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function getCollectionManga(
+  collectionId: number,
+): (Collection & { manga: Manga[] }) | null {
+  const collection = getCollectionById(collectionId);
+  if (!collection) return null;
+
+  const stmt = db.prepare(`
+    SELECT m.* FROM manga m
+    JOIN collection_items ci ON m.id = ci.manga_id
+    WHERE ci.collection_id = ?
+    ORDER BY ci.added_at DESC
+  `);
+  const manga = stmt.all(collectionId) as Manga[];
+
+  return { ...collection, manga };
+}
+
+export function deleteCollection(id: number): boolean {
+  try {
+    db.prepare("DELETE FROM collections WHERE id = ?").run(id);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// ============== READING STATS ==============
+
+export function updateReadingStats(
+  userId: string,
+  mangaId: number,
+  chaptersRead = 1,
+  pagesRead = 0,
+  timeSpent = 0,
+): void {
+  const existing = db
+    .prepare("SELECT * FROM reading_stats WHERE user_id = ? AND manga_id = ?")
+    .get(userId, mangaId) as any;
+
+  if (existing) {
+    db.prepare(
+      `
+      UPDATE reading_stats 
+      SET chapters_read = chapters_read + ?, 
+          pages_read = pages_read + ?,
+          time_spent = time_spent + ?,
+          last_read_at = datetime('now')
+      WHERE user_id = ? AND manga_id = ?
+    `,
+    ).run(chaptersRead, pagesRead, timeSpent, userId, mangaId);
+  } else {
+    db.prepare(
+      `
+      INSERT INTO reading_stats (user_id, manga_id, chapters_read, pages_read, time_spent)
+      VALUES (?, ?, ?, ?, ?)
+    `,
+    ).run(userId, mangaId, chaptersRead, pagesRead, timeSpent);
+  }
+}
+
+export function getUserReadingStats(userId: string) {
+  const stats = db
+    .prepare(
+      `
+    SELECT 
+      SUM(chapters_read) as totalChapters,
+      SUM(pages_read) as totalPages,
+      SUM(time_spent) as totalTime,
+      COUNT(*) as mangaCount
+    FROM reading_stats 
+    WHERE user_id = ?
+  `,
+    )
+    .get(userId) as any;
+
+  return {
+    totalChaptersRead: stats?.totalChapters || 0,
+    totalPagesRead: stats?.totalPages || 0,
+    totalTimeSpent: stats?.totalTime || 0,
+    mangaCount: stats?.mangaCount || 0,
+  };
+}
+
+export function getTopReadManga(userId: string, limit = 10) {
+  const stmt = db.prepare(`
+    SELECT rs.*, m.title, m.cover, m.type
+    FROM reading_stats rs
+    JOIN manga m ON rs.manga_id = m.id
+    WHERE rs.user_id = ?
+    ORDER BY rs.chapters_read DESC, rs.last_read_at DESC
+    LIMIT ?
+  `);
+  return stmt.all(userId, limit);
+}
+
+// ============== RECOMMENDATIONS ==============
+
+export function getRecommendations(userId: string, limit = 10): Manga[] {
+  // Get user's favorite genres/tags
+  const favorites = db
+    .prepare(
+      `
+    SELECT m.tags FROM favorites f
+    JOIN manga m ON f.manga_id = m.id
+    WHERE f.user_id = ?
+    ORDER BY f.created_at DESC
+    LIMIT 20
+  `,
+    )
+    .all(userId) as { tags: string }[];
+
+  if (favorites.length === 0) {
+    // If no favorites, return popular manga
+    return getAllManga({ sort: "rating", limit });
+  }
+
+  // Count tag frequency
+  const tagCounts: Record<string, number> = {};
+  favorites.forEach((f) => {
+    if (f.tags) {
+      const tags = JSON.parse(f.tags as string);
+      tags.forEach((tag: string) => {
+        tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+      });
+    }
+  });
+
+  // Get top tags
+  const topTags = Object.entries(tagCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([tag]) => tag);
+
+  // Get manga with these tags that user hasn't read
+  const readManga = db
+    .prepare(
+      `
+    SELECT DISTINCT manga_id FROM reading_stats WHERE user_id = ?
+  `,
+    )
+    .all(userId) as { manga_id: number }[];
+
+  const readIds = readManga.map((r) => r.manga_id);
+  const placeholders = readIds.map(() => "?").join(",");
+
+  let query = "SELECT * FROM manga WHERE 1=1";
+  const params: any[] = [];
+
+  if (topTags.length > 0) {
+    query += ` AND (`;
+    query += topTags.map(() => `tags LIKE ?`).join(" OR ");
+    query += `)`;
+    topTags.forEach((tag) => params.push(`%${tag}%`));
+  }
+
+  if (readIds.length > 0) {
+    query += ` AND id NOT IN (${placeholders})`;
+    params.push(...readIds);
+  }
+
+  query += " ORDER BY rating DESC, views DESC LIMIT ?";
+  params.push(limit);
+
+  const stmt = db.prepare(query);
+  return stmt.all(...params) as Manga[];
 }
 
 // ============== SEED DATA ==============
 
 export function seedDatabase(): void {
-  const count = db.prepare('SELECT COUNT(*) as count FROM manga').get() as { count: number };
-  
+  const count = db.prepare("SELECT COUNT(*) as count FROM manga").get() as {
+    count: number;
+  };
+
   if (count.count > 0) {
-    console.log('Database already has data, skipping seed');
+    console.log("Database already has data, skipping seed");
     return;
   }
-  
+
   const popularManga = [
-    { title: 'Solo Leveling', description: 'In a world where hunters possess magical abilities...', status: 'completed', type: 'manhwa', demographic: 'shonen', author: 'Chugong', tags: ['Action', 'Adventure', 'Fantasy'] },
-    { title: 'Tower of God', description: 'Tower of God follows the story of Bam...', status: 'ongoing', type: 'manhwa', demographic: 'shonen', author: 'SIU', tags: ['Action', 'Adventure', 'Fantasy'] },
-    { title: 'One Piece', description: 'Monkey D. Luffy sets off on an adventure...', status: 'ongoing', type: 'manga', demographic: 'shonen', author: 'Eiichiro Oda', tags: ['Action', 'Adventure', 'Comedy'] },
-    { title: 'Naruto', description: 'Naruto Uzumaki dreams of becoming the Hokage...', status: 'completed', type: 'manga', demographic: 'shonen', author: 'Masashi Kishimoto', tags: ['Action', 'Adventure', 'Ninja'] },
-    { title: 'Attack on Titan', description: 'In a world where humanity lives within walls...', status: 'completed', type: 'manga', demographic: 'shonen', author: 'Hajime Isayama', tags: ['Action', 'Drama', 'Horror'] },
-    { title: 'My Hero Academia', description: 'In a world where most people have superpowers...', status: 'ongoing', type: 'manga', demographic: 'shonen', author: 'Kohei Horikoshi', tags: ['Action', 'Comedy', 'School'] },
-    { title: 'Demon Slayer', description: 'Tanjiro Kamado\'s peaceful life is shattered...', status: 'completed', type: 'manga', demographic: 'shonen', author: 'Koyoharu Gotouge', tags: ['Action', 'Demon', 'Historical'] },
-    { title: 'Chainsaw Man', description: 'Denji is a young man trapped in poverty...', status: 'ongoing', type: 'manga', demographic: 'seinen', author: 'Tatsuki Fujimoto', tags: ['Action', 'Dark Fantasy'] },
-    { title: 'Jujutsu Kaisen', description: 'Yuji Itadori stumbles upon a cursed object...', status: 'ongoing', type: 'manga', demographic: 'shonen', author: 'Gege Akutami', tags: ['Action', 'School', 'Supernatural'] },
-    { title: 'One Punch Man', description: 'Saitama is a hero who can defeat any opponent...', status: 'ongoing', type: 'manga', demographic: 'shonen', author: 'ONE', tags: ['Action', 'Comedy', 'Superhero'] }
+    {
+      title: "Solo Leveling",
+      description: "In a world where hunters possess magical abilities...",
+      status: "completed",
+      type: "manhwa",
+      demographic: "shonen",
+      author: "Chugong",
+      tags: ["Action", "Adventure", "Fantasy"],
+    },
+    {
+      title: "Tower of God",
+      description: "Tower of God follows the story of Bam...",
+      status: "ongoing",
+      type: "manhwa",
+      demographic: "shonen",
+      author: "SIU",
+      tags: ["Action", "Adventure", "Fantasy"],
+    },
+    {
+      title: "One Piece",
+      description: "Monkey D. Luffy sets off on an adventure...",
+      status: "ongoing",
+      type: "manga",
+      demographic: "shonen",
+      author: "Eiichiro Oda",
+      tags: ["Action", "Adventure", "Comedy"],
+    },
+    {
+      title: "Naruto",
+      description: "Naruto Uzumaki dreams of becoming the Hokage...",
+      status: "completed",
+      type: "manga",
+      demographic: "shonen",
+      author: "Masashi Kishimoto",
+      tags: ["Action", "Adventure", "Ninja"],
+    },
+    {
+      title: "Attack on Titan",
+      description: "In a world where humanity lives within walls...",
+      status: "completed",
+      type: "manga",
+      demographic: "shonen",
+      author: "Hajime Isayama",
+      tags: ["Action", "Drama", "Horror"],
+    },
+    {
+      title: "My Hero Academia",
+      description: "In a world where most people have superpowers...",
+      status: "ongoing",
+      type: "manga",
+      demographic: "shonen",
+      author: "Kohei Horikoshi",
+      tags: ["Action", "Comedy", "School"],
+    },
+    {
+      title: "Demon Slayer",
+      description: "Tanjiro Kamado's peaceful life is shattered...",
+      status: "completed",
+      type: "manga",
+      demographic: "shonen",
+      author: "Koyoharu Gotouge",
+      tags: ["Action", "Demon", "Historical"],
+    },
+    {
+      title: "Chainsaw Man",
+      description: "Denji is a young man trapped in poverty...",
+      status: "ongoing",
+      type: "manga",
+      demographic: "seinen",
+      author: "Tatsuki Fujimoto",
+      tags: ["Action", "Dark Fantasy"],
+    },
+    {
+      title: "Jujutsu Kaisen",
+      description: "Yuji Itadori stumbles upon a cursed object...",
+      status: "ongoing",
+      type: "manga",
+      demographic: "shonen",
+      author: "Gege Akutami",
+      tags: ["Action", "School", "Supernatural"],
+    },
+    {
+      title: "One Punch Man",
+      description: "Saitama is a hero who can defeat any opponent...",
+      status: "ongoing",
+      type: "manga",
+      demographic: "shonen",
+      author: "ONE",
+      tags: ["Action", "Comedy", "Superhero"],
+    },
   ];
-  
+
   const stmt = db.prepare(`
     INSERT INTO manga (title, description, status, type, demographic, author, tags)
     VALUES (?, ?, ?, ?, ?, ?, ?)
   `);
-  
+
   for (const manga of popularManga) {
-    stmt.run(manga.title, manga.description, manga.status, manga.type, manga.demographic, manga.author, JSON.stringify(manga.tags));
+    stmt.run(
+      manga.title,
+      manga.description,
+      manga.status,
+      manga.type,
+      manga.demographic,
+      manga.author,
+      JSON.stringify(manga.tags),
+    );
   }
-  
+
   console.log(`✅ Database seeded with ${popularManga.length} manga`);
 }
 

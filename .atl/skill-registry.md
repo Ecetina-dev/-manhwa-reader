@@ -1,45 +1,42 @@
 # Skill Registry
 
-**Project**: web_manhau  
-**Generated**: 2026-03-14
-
-## Project Stack
-
-- **Framework**: SvelteKit 2.x + Svelte 5 (Runes)
-- **Styling**: TailwindCSS 4
-- **Language**: TypeScript
-- **Deployment**: Cloudflare Pages
-- **Build Tool**: Vite 7
+As your FIRST step before starting any work, identify and load skills relevant to your task from this registry.
 
 ## User Skills
 
-| Skill | Description | Location |
-|-------|-------------|----------|
-| sdd-init | Initialize SDD context in a project | ~/.config/opencode/skills/sdd-init/SKILL.md |
-| sdd-explore | Explore and investigate ideas before committing to a change | ~/.config/opencode/skills/sdd-explore/SKILL.md |
-| sdd-propose | Create a change proposal with intent, scope, and approach | ~/.config/opencode/skills/sdd-propose/SKILL.md |
-| sdd-spec | Write specifications with requirements and scenarios | ~/.config/opencode/skills/sdd-spec/SKILL.md |
-| sdd-design | Create technical design document with architecture decisions | ~/.config/opencode/skills/sdd-design/SKILL.md |
-| sdd-tasks | Break down a change into implementation task checklist | ~/.config/opencode/skills/sdd-tasks/SKILL.md |
-| sdd-apply | Implement tasks from the change | ~/.config/opencode/skills/sdd-apply/SKILL.md |
-| sdd-verify | Validate implementation against specs | ~/.config/opencode/skills/sdd-verify/SKILL.md |
-| sdd-archive | Sync delta specs to main specs and archive completed changes | ~/.config/opencode/skills/sdd-archive/SKILL.md |
-| skill-creator | Create new AI agent skills | ~/.config/opencode/skills/skill-creator/SKILL.md |
-| data-architect | Database architecture and design patterns | ~/.config/opencode/skills/data-architect/SKILL.md |
-| go-testing | Go testing patterns | ~/.config/opencode/skills/go-testing/SKILL.md |
+| Trigger                                                                                                                                                                                  | Skill                              | Path                                                                |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- | ------------------------------------------------------------------- |
+| When building AI chat features - breaking changes from v4.                                                                                                                               | ai-sdk-5                           | .config\opencode\skills\ai-sdk-5\SKILL.md                           |
+| Cuando se requiere diseño de BD, auditoría de queries, definición de entidades, o decisiones de arquitectura de datos.                                                                   | data-architect                     | .config\opencode\skills\data-architect\SKILL.md                     |
+| When designing databases with auto-learning capabilities, enhanced data architecture with Engram memory integration, or user explicitly mentions "enhanced" or "with learning".          | data-architect-enhanced            | .config\opencode\skills\data-architect-enhanced\SKILL.md            |
+| When building REST APIs with Django - ViewSets, Serializers, Filters.                                                                                                                    | django-drf                         | .config\opencode\skills\django-drf\SKILL.md                         |
+| When building desktop apps, working with Electron main/renderer processes, IPC communication, or native integrations.                                                                    | electron                           | .config\opencode\skills\electron\SKILL.md                           |
+| During Elixir code review, refactoring sessions, or when writing Phoenix/Ecto code.                                                                                                      | elixir-antipatterns                | .config\opencode\skills\elixir-antipatterns\SKILL.md                |
+| When creating PRs, writing PR descriptions, or using gh CLI for pull requests.                                                                                                           | github-pr                          | .config\opencode\skills\github-pr\SKILL.md                          |
+| When writing Go tests, using teatest, or adding test coverage.                                                                                                                           | go-testing                         | .config\opencode\skills\go-testing\SKILL.md                         |
+| When writing Go tests with auto-learning capabilities, enhanced Go testing with Engram memory integration, or user explicitly mentions "enhanced" or "with learning".                    | go-testing-enhanced                | .config\opencode\skills\go-testing-enhanced\SKILL.md                |
+| When structuring Java apps by Domain/Application/Infrastructure, or refactoring toward clean architecture.                                                                               | hexagonal-architecture-layers-java | .config\opencode\skills\hexagonal-architecture-layers-java\SKILL.md |
+| When writing Java 21 code using records, sealed types, or virtual threads.                                                                                                               | java-21                            | .config\opencode\skills\java-21\SKILL.md                            |
+| When user asks to create an epic, large feature, or multi-task initiative.                                                                                                               | jira-epic                          | .config\opencode\skills\jira-epic\SKILL.md                          |
+| When user asks to create a Jira task, ticket, or issue.                                                                                                                                  | jira-task                          | .config\opencode\skills\jira-task\SKILL.md                          |
+| When working with Next.js - routing, Server Actions, data fetching.                                                                                                                      | nextjs-15                          | .config\opencode\skills\nextjs-15\SKILL.md                          |
+| When writing E2E tests - Page Objects, selectors, MCP workflow.                                                                                                                          | playwright                         | .config\opencode\skills\playwright\SKILL.md                         |
+| Cuando el usuario solicite crear un PRD, product requirements document, especificaciones de producto, documento de requisitos, requirements, o pregunte sobre estructura de PRD.         | prd-creator                        | .config\opencode\skills\prd-creator\SKILL.md                        |
+| When writing Python tests - fixtures, mocking, markers.                                                                                                                                  | pytest                             | .config\opencode\skills\pytest\SKILL.md                             |
+| When writing React components - no useMemo/useCallback needed.                                                                                                                           | react-19                           | .config\opencode\skills\react-19\SKILL.md                           |
+| When building mobile apps, working with React Native components, using Expo, React Navigation, or NativeWind.                                                                            | react-native                       | .config\opencode\skills\react-native\SKILL.md                       |
+| When user asks to create a new skill, add agent instructions, or document patterns for AI.                                                                                               | skill-creator                      | .config\opencode\skills\skill-creator\SKILL.md                      |
+| When user asks to create a new skill with auto-learning capabilities, enhanced skill creation with Engram memory integration, or user explicitly mentions "enhanced" or "with learning". | skill-creator-enhanced             | .config\opencode\skills\skill-creator-enhanced\SKILL.md             |
+| When capturing learnings, retrieving past decisions, or integrating Engram memory into other skills.                                                                                     | skill-learning-core                | .config\opencode\skills\skill-learning-core\SKILL.md                |
+| When building or refactoring Spring Boot 3 applications.                                                                                                                                 | spring-boot-3                      | .config\opencode\skills\spring-boot-3\SKILL.md                      |
+| When styling with Tailwind - cn(), theme variables, no var() in className.                                                                                                               | tailwind-4                         | .config\opencode\skills\tailwind-4\SKILL.md                         |
+| When writing TypeScript code - types, interfaces, generics.                                                                                                                              | typescript                         | .config\opencode\skills\typescript\SKILL.md                         |
+| When user mentions "requirements", "user stories", "acceptance criteria", "business analysis", "web project planning".                                                                   | web-requirements-analyst           | .config\opencode\skills\web-requirements-analyst\SKILL.md           |
+| When using Zod for validation - breaking changes from v3.                                                                                                                                | zod-4                              | .config\opencode\skills\zod-4\SKILL.md                              |
+| When managing React state with Zustand.                                                                                                                                                  | zustand-5                          | .config\opencode\skills\zustand-5\SKILL.md                          |
 
 ## Project Conventions
 
-- **Architecture**: SvelteKit file-system routing (src/routes/)
-- **Components**: Located in src/lib/components/
-- **Stores**: Located in src/lib/stores/ (Svelte stores)
-- **Types**: src/lib/types.ts
-- **API Integration**: src/lib/mangadex.ts (MangaDex API client)
-- **Testing**: Not configured
-- **Linting**: Not configured
-
-## Notes
-
-- Project uses Svelte 5 Runes (dynamicCompileOptions enabled)
-- TailwindCSS 4 with PostCSS
-- No pre-commit hooks or CI configured
+| File         | Path | Notes |
+| ------------ | ---- | ----- |
+| _None found_ |      |       |

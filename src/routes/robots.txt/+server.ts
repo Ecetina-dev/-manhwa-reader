@@ -1,8 +1,8 @@
 export const prerender = false;
 
 export function GET() {
-  const baseUrl = 'https://manhau.app';
-  
+  const baseUrl = "https://manhau.app";
+
   const robots = `# ManHau Robots.txt
 User-agent: *
 Allow: /
@@ -51,8 +51,8 @@ Allow: /
 
   return new Response(robots, {
     headers: {
-      'Content-Type': 'text/plain',
-      'Cache-Control': 'public, max-age=86400'
-    }
+      "Content-Type": "text/plain",
+      "Cache-Control": "public, max-age=86400",
+    },
   });
 }

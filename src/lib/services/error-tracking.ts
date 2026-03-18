@@ -1,11 +1,11 @@
 /**
  * Error Tracking Service
- * 
+ *
  * Client-side error handling and reporting
  */
 
-import { browser } from '$app/environment';
-import { trackError } from './analytics';
+import { browser } from "$app/environment";
+import { trackError } from "./analytics";
 
 interface ErrorReport {
   message: string;
@@ -26,7 +26,7 @@ interface ErrorBoundaryState {
  */
 function getUserId(): string | undefined {
   if (!browser) return undefined;
-  return localStorage.getItem('manhau_user_id') || undefined;
+  return localStorage.getItem("manhau_user_id") || undefined;
 }
 
 /**
@@ -43,11 +43,11 @@ export function initErrorTracking(): void {
       url: window.location.href,
       timestamp: new Date().toISOString(),
       userAgent: navigator.userAgent,
-      userId: getUserId()
+      userId: getUserId(),
     };
 
     // Log to console in development
-    console.error('❌ Uncaught Error:', errorReport);
+    console.error("❌ Uncaught Error:", errorReport);
 
     // Send to analytics
     trackError(errorReport.message, errorReport.stack);
@@ -65,14 +65,14 @@ export function initErrorTracking(): void {
       url: window.location.href,
       timestamp: new Date().toISOString(),
       userAgent: navigator.userAgent,
-      userId: getUserId()
+      userId: getUserId(),
     };
 
-    console.error('❌ Unhandled Promise Rejection:', errorReport);
+    console.error("❌ Unhandled Promise Rejection:", errorReport);
     trackError(errorReport.message, errorReport.stack);
   };
 
-  console.log('🔍 Error tracking initialized');
+  console.log("🔍 Error tracking initialized");
 }
 
 /**
@@ -80,38 +80,45 @@ export function initErrorTracking(): void {
  */
 export function createErrorBoundary(): ErrorBoundaryState {
   return {
-    hasError: false
+    hasError: false,
   };
 }
 
 /**
  * Handle component error
  */
-export function handleComponentError(error: Error, componentStack?: string): void {
+export function handleComponentError(
+  error: Error,
+  componentStack?: string,
+): void {
   const errorReport: ErrorReport = {
     message: error.message,
     stack: componentStack || error.stack,
-    url: browser ? window.location.href : 'server',
+    url: browser ? window.location.href : "server",
     timestamp: new Date().toISOString(),
-    userId: getUserId()
+    userId: getUserId(),
   };
 
-  console.error('❌ Component Error:', errorReport);
+  console.error("❌ Component Error:", errorReport);
   trackError(errorReport.message, errorReport.stack);
 }
 
 /**
  * Report API error
  */
-export function reportApiError(endpoint: string, status: number, message: string): void {
+export function reportApiError(
+  endpoint: string,
+  status: number,
+  message: string,
+): void {
   const errorReport: ErrorReport = {
     message: `API Error [${endpoint}]: ${status} - ${message}`,
-    url: browser ? window.location.href : 'server',
-    timestamp: new Date().toISOString()
+    url: browser ? window.location.href : "server",
+    timestamp: new Date().toISOString(),
   };
 
-  console.error('❌ API Error:', errorReport);
-  
+  console.error("❌ API Error:", errorReport);
+
   // Don't track all API errors to analytics (they can be spammy)
   // Only track 5xx errors
   if (status >= 500) {
@@ -122,16 +129,26 @@ export function reportApiError(endpoint: string, status: number, message: string
 /**
  * Log performance issue
  */
-export function logPerformanceIssue(metric: string, value: number, threshold: number): void {
+export function logPerformanceIssue(
+  metric: string,
+  value: number,
+  threshold: number,
+): void {
   if (value > threshold) {
-    console.warn(`⚠️ Performance issue: ${metric} (${value}ms) exceeds threshold (${threshold}ms)`);
+    console.warn(
+      `⚠️ Performance issue: ${metric} (${value}ms) exceeds threshold (${threshold}ms)`,
+    );
   }
 }
 
 /**
  * Track slow network request
  */
-export function trackSlowRequest(url: string, duration: number, threshold: number = 5000): void {
+export function trackSlowRequest(
+  url: string,
+  duration: number,
+  threshold: number = 5000,
+): void {
   if (duration > threshold) {
     const message = `Slow request: ${url} took ${duration}ms`;
     console.warn(`🐌 ${message}`);

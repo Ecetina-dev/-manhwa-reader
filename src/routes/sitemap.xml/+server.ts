@@ -1,13 +1,13 @@
-import { getAllManga } from '$lib/server/sqlite';
+import { getAllManga } from "$lib/server/sqlite";
 
 export const prerender = false;
 
 export async function GET() {
   const manga = getAllManga({ limit: 1000 });
-  
-  const baseUrl = 'https://manhau.app';
-  const now = new Date().toISOString().split('T')[0];
-  
+
+  const baseUrl = "https://manhau.app";
+  const now = new Date().toISOString().split("T")[0];
+
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
          xmlns:xhtml="http://www.w3.org/1999/xhtml"
@@ -42,34 +42,42 @@ export async function GET() {
   </url>
   
   <!-- Manga pages -->
-  ${manga.map(m => `
+  ${manga
+    .map(
+      (m) => `
   <url>
     <loc>${baseUrl}/${m.id}</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-    <lastmod>${m.updated_at ? m.updated_at.split(' ')[0] : now}</lastmod>
-    ${m.cover ? `
+    <lastmod>${m.updated_at ? m.updated_at.split(" ")[0] : now}</lastmod>
+    ${
+      m.cover
+        ? `
     <image:image>
-      <image:loc>${m.cover.startsWith('http') ? m.cover : baseUrl + m.cover}</image:loc>
+      <image:loc>${m.cover.startsWith("http") ? m.cover : baseUrl + m.cover}</image:loc>
       <image:title>${escapeXml(m.title)}</image:title>
-    </image:image>` : ''}
-  </url>`).join('')}
+    </image:image>`
+        : ""
+    }
+  </url>`,
+    )
+    .join("")}
   
 </urlset>`;
 
   return new Response(sitemap, {
     headers: {
-      'Content-Type': 'application/xml',
-      'Cache-Control': 'public, max-age=3600'
-    }
+      "Content-Type": "application/xml",
+      "Cache-Control": "public, max-age=3600",
+    },
   });
 }
 
 function escapeXml(str: string): string {
   return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
 }

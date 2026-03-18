@@ -11,6 +11,7 @@
     tags?: string[];
     publishDate?: string;
     modifiedDate?: string;
+    breadcrumbs?: { name: string; url: string }[];
     children?: Snippet;
   }
 
@@ -24,6 +25,7 @@
     tags = [],
     publishDate,
     modifiedDate,
+    breadcrumbs,
     children 
   }: Props = $props();
 
@@ -74,6 +76,18 @@
       "@type": "WebPage",
       "@id": fullUrl
     }
+  } : null;
+
+  // Breadcrumb schema
+  const breadcrumbSchema = breadcrumbs && breadcrumbs.length > 0 ? {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": breadcrumbs.map((item, index) => ({
+      "@type": "ListItem",
+      "position": index + 1,
+      "name": item.name,
+      "item": item.url.startsWith('http') ? item.url : `https://manhau.app${item.url}`
+    }))
   } : null;
 </script>
 
@@ -126,6 +140,9 @@
   {@html `<script type="application/ld+json">${JSON.stringify(websiteSchema)}</script>`}
   {#if articleSchema}
     {@html `<script type="application/ld+json">${JSON.stringify(articleSchema)}</script>`}
+  {/if}
+  {#if breadcrumbSchema}
+    {@html `<script type="application/ld+json">${JSON.stringify(breadcrumbSchema)}</script>`}
   {/if}
 </svelte:head>
 

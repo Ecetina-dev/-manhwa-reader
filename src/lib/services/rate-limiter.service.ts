@@ -16,14 +16,16 @@ interface QueuedRequest {
 /**
  * Creates a rate limiter that throttles requests to a maximum rate
  */
-export function createRateLimiter(config: RateLimiterConfig = { requestsPerSecond: 1 }) {
+export function createRateLimiter(
+  config: RateLimiterConfig = { requestsPerSecond: 1 },
+) {
   const { requestsPerSecond } = config;
   const delay = 1000 / requestsPerSecond;
-  
+
   let queue: QueuedRequest[] = [];
   let isProcessing = false;
   let lastRequestTime = 0;
-  
+
   /**
    * Process the next request in the queue
    */
@@ -32,16 +34,18 @@ export function createRateLimiter(config: RateLimiterConfig = { requestsPerSecon
       isProcessing = false;
       return;
     }
-    
+
     isProcessing = true;
-    
+
     const now = Date.now();
     const timeSinceLastRequest = now - lastRequestTime;
-    
+
     if (timeSinceLastRequest < delay) {
-      await new Promise((resolve) => setTimeout(resolve, delay - timeSinceLastRequest));
+      await new Promise((resolve) =>
+        setTimeout(resolve, delay - timeSinceLastRequest),
+      );
     }
-    
+
     const request = queue.shift();
     if (request) {
       lastRequestTime = Date.now();
@@ -52,28 +56,28 @@ export function createRateLimiter(config: RateLimiterConfig = { requestsPerSecon
         request.reject(error as Error);
       }
     }
-    
+
     // Process next
     processQueue();
   }
-  
+
   /**
    * Throttle a function call to respect rate limits
    */
   function throttle<T>(fn: () => Promise<T>): Promise<T> {
     return new Promise<T>((resolve, reject) => {
-      queue.push({ 
-        fn: fn as () => Promise<unknown>, 
-        resolve: resolve as (value: unknown) => void, 
-        reject 
+      queue.push({
+        fn: fn as () => Promise<unknown>,
+        resolve: resolve as (value: unknown) => void,
+        reject,
       });
-      
+
       if (!isProcessing) {
         processQueue();
       }
     });
   }
-  
+
   /**
    * Reset the rate limiter (for testing)
    */
@@ -82,14 +86,14 @@ export function createRateLimiter(config: RateLimiterConfig = { requestsPerSecon
     isProcessing = false;
     lastRequestTime = 0;
   }
-  
+
   /**
    * Get current queue length (for debugging)
    */
   function getQueueLength(): number {
     return queue.length;
   }
-  
+
   return {
     throttle,
     reset,
@@ -107,7 +111,7 @@ export const rateLimiter = createRateLimiter({ requestsPerSecond: 1 });
  */
 export async function withThrottle<T>(
   fn: () => Promise<T>,
-  limiter = rateLimiter
+  limiter = rateLimiter,
 ): Promise<T> {
   return limiter.throttle(fn);
 }

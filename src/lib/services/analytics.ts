@@ -1,10 +1,10 @@
 /**
  * Analytics Service
- * 
+ *
  * Google Analytics 4 integration for tracking user behavior
  */
 
-import { browser } from '$app/environment';
+import { browser } from "$app/environment";
 
 interface AnalyticsEvent {
   name: string;
@@ -18,9 +18,10 @@ interface PageViewData {
 }
 
 // Google Analytics 4 Measurement ID (set via environment variable)
-const GA_MEASUREMENT_ID = typeof import.meta !== 'undefined' 
-  ? (import.meta as any).env?.VITE_GA_MEASUREMENT_ID || null
-  : null;
+const GA_MEASUREMENT_ID =
+  typeof import.meta !== "undefined"
+    ? (import.meta as any).env?.VITE_GA_MEASUREMENT_ID || null
+    : null;
 
 let initialized = false;
 
@@ -29,35 +30,37 @@ let initialized = false;
  */
 export function initAnalytics(): void {
   if (!browser || initialized) return;
-  
+
   // Skip if no GA ID configured
   if (!GA_MEASUREMENT_ID) {
-    console.warn('⚠️ Google Analytics not configured. Set VITE_GA_MEASUREMENT_ID environment variable.');
+    console.warn(
+      "⚠️ Google Analytics not configured. Set VITE_GA_MEASUREMENT_ID environment variable.",
+    );
     return;
   }
 
   // Add GA4 script
-  const script = document.createElement('script');
+  const script = document.createElement("script");
   script.async = true;
   script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
   document.head.appendChild(script);
 
   // Initialize dataLayer
   (window as any).dataLayer = (window as any).dataLayer || [];
-  
+
   // Define gtag function
   function gtag(...args: any[]) {
     (window as any).dataLayer.push(args);
   }
   (window as any).gtag = gtag;
 
-  gtag('js', new Date());
-  gtag('config', GA_MEASUREMENT_ID, {
-    send_page_view: false // Manual page view tracking
+  gtag("js", new Date());
+  gtag("config", GA_MEASUREMENT_ID, {
+    send_page_view: false, // Manual page view tracking
   });
 
   initialized = true;
-  console.log('📊 Google Analytics initialized');
+  console.log("📊 Google Analytics initialized");
 }
 
 /**
@@ -65,13 +68,13 @@ export function initAnalytics(): void {
  */
 export function trackPageView(data: PageViewData): void {
   if (!browser) return;
-  
+
   const gtag = (window as any).gtag;
-  if (typeof gtag === 'function') {
-    gtag('event', 'page_view', {
+  if (typeof gtag === "function") {
+    gtag("event", "page_view", {
       page_title: data.page_title,
       page_location: data.page_location,
-      page_path: data.page_path
+      page_path: data.page_path,
     });
   }
 }
@@ -81,10 +84,10 @@ export function trackPageView(data: PageViewData): void {
  */
 export function trackEvent(event: AnalyticsEvent): void {
   if (!browser) return;
-  
+
   const gtag = (window as any).gtag;
-  if (typeof gtag === 'function') {
-    gtag('event', event.name, event.params || {});
+  if (typeof gtag === "function") {
+    gtag("event", event.name, event.params || {});
   }
 }
 
@@ -93,25 +96,29 @@ export function trackEvent(event: AnalyticsEvent): void {
  */
 export function trackMangaView(mangaId: string, mangaTitle: string): void {
   trackEvent({
-    name: 'manga_view',
+    name: "manga_view",
     params: {
       manga_id: mangaId,
-      manga_title: mangaTitle
-    }
+      manga_title: mangaTitle,
+    },
   });
 }
 
 /**
  * Track chapter read
  */
-export function trackChapterRead(mangaId: string, mangaTitle: string, chapterNumber: string): void {
+export function trackChapterRead(
+  mangaId: string,
+  mangaTitle: string,
+  chapterNumber: string,
+): void {
   trackEvent({
-    name: 'chapter_read',
+    name: "chapter_read",
     params: {
       manga_id: mangaId,
       manga_title: mangaTitle,
-      chapter_number: chapterNumber
-    }
+      chapter_number: chapterNumber,
+    },
   });
 }
 
@@ -120,23 +127,23 @@ export function trackChapterRead(mangaId: string, mangaTitle: string, chapterNum
  */
 export function trackSearch(searchTerm: string, resultsCount: number): void {
   trackEvent({
-    name: 'search',
+    name: "search",
     params: {
       search_term: searchTerm,
-      results_count: resultsCount
-    }
+      results_count: resultsCount,
+    },
   });
 }
 
 /**
  * Track favorite toggle
  */
-export function trackFavorite(mangaId: string, action: 'add' | 'remove'): void {
+export function trackFavorite(mangaId: string, action: "add" | "remove"): void {
   trackEvent({
-    name: action === 'add' ? 'add_to_favorite' : 'remove_from_favorite',
+    name: action === "add" ? "add_to_favorite" : "remove_from_favorite",
     params: {
-      manga_id: mangaId
-    }
+      manga_id: mangaId,
+    },
   });
 }
 
@@ -145,11 +152,11 @@ export function trackFavorite(mangaId: string, action: 'add' | 'remove'): void {
  */
 export function trackRating(mangaId: string, rating: number): void {
   trackEvent({
-    name: 'rate_manga',
+    name: "rate_manga",
     params: {
       manga_id: mangaId,
-      rating: rating
-    }
+      rating: rating,
+    },
   });
 }
 
@@ -158,10 +165,10 @@ export function trackRating(mangaId: string, rating: number): void {
  */
 export function trackComment(mangaId: string): void {
   trackEvent({
-    name: 'post_comment',
+    name: "post_comment",
     params: {
-      manga_id: mangaId
-    }
+      manga_id: mangaId,
+    },
   });
 }
 
@@ -170,16 +177,16 @@ export function trackComment(mangaId: string): void {
  */
 export function trackError(errorMessage: string, errorStack?: string): void {
   trackEvent({
-    name: 'exception',
+    name: "exception",
     params: {
       description: errorMessage,
-      fatal: false
-    }
+      fatal: false,
+    },
   });
-  
+
   // Also log to console in development
-  if (typeof window !== 'undefined' && !(window as any).__gta_initialized) {
-    console.error('[Analytics Error]', errorMessage, errorStack);
+  if (typeof window !== "undefined" && !(window as any).__gta_initialized) {
+    console.error("[Analytics Error]", errorMessage, errorStack);
   }
 }
 
@@ -188,11 +195,11 @@ export function trackError(errorMessage: string, errorStack?: string): void {
  */
 export function setUserProperty(name: string, value: string): void {
   if (!browser) return;
-  
+
   const gtag = (window as any).gtag;
-  if (typeof gtag === 'function') {
-    gtag('set', 'user_properties', {
-      [name]: value
+  if (typeof gtag === "function") {
+    gtag("set", "user_properties", {
+      [name]: value,
     });
   }
 }
@@ -200,14 +207,19 @@ export function setUserProperty(name: string, value: string): void {
 /**
  * Track timing
  */
-export function trackTiming(category: string, variable: string, value: number, label?: string): void {
+export function trackTiming(
+  category: string,
+  variable: string,
+  value: number,
+  label?: string,
+): void {
   trackEvent({
-    name: 'timing_complete',
+    name: "timing_complete",
     params: {
       name: variable,
       value: value,
       event_category: category,
-      event_label: label
-    }
+      event_label: label,
+    },
   });
 }

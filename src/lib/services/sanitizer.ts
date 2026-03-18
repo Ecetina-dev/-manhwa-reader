@@ -1,6 +1,6 @@
 /**
  * Input Sanitization Service
- * 
+ *
  * Sanitizes user inputs to prevent XSS and injection attacks
  */
 
@@ -8,7 +8,7 @@
  * Strip HTML tags from string
  */
 export function stripHtml(input: string): string {
-  return input.replace(/<[^>]*>/g, '');
+  return input.replace(/<[^>]*>/g, "");
 }
 
 /**
@@ -16,14 +16,14 @@ export function stripHtml(input: string): string {
  */
 export function escapeHtml(input: string): string {
   const map: Record<string, string> = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#x27;',
-    '/': '&#x2F;'
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#x27;",
+    "/": "&#x2F;",
   };
-  return input.replace(/[&<>"'/]/g, char => map[char]);
+  return input.replace(/[&<>"'/]/g, (char) => map[char]);
 }
 
 /**
@@ -31,7 +31,7 @@ export function escapeHtml(input: string): string {
  */
 export function sanitizeSql(input: string): string {
   // This is just a fallback - ALWAYS use parameterized queries!
-  return input.replace(/['";\\]/g, '');
+  return input.replace(/['";\\]/g, "");
 }
 
 /**
@@ -39,8 +39,8 @@ export function sanitizeSql(input: string): string {
  */
 export function sanitizeFilename(input: string): string {
   return input
-    .replace(/[^a-zA-Z0-9._-]/g, '_')
-    .replace(/_{2,}/g, '_')
+    .replace(/[^a-zA-Z0-9._-]/g, "_")
+    .replace(/_{2,}/g, "_")
     .substring(0, 255);
 }
 
@@ -51,12 +51,12 @@ export function sanitizeUrl(input: string): string {
   try {
     const url = new URL(input);
     // Only allow http and https
-    if (!['http:', 'https:'].includes(url.protocol)) {
-      return '';
+    if (!["http:", "https:"].includes(url.protocol)) {
+      return "";
     }
     return input;
   } catch {
-    return '';
+    return "";
   }
 }
 
@@ -67,7 +67,7 @@ export function sanitizeSearchQuery(input: string): string {
   return input
     .trim()
     .substring(0, 100) // Limit length
-    .replace(/[<>\"'&]/g, ''); // Remove dangerous chars
+    .replace(/[<>\"'&]/g, ""); // Remove dangerous chars
 }
 
 /**
@@ -77,9 +77,9 @@ export function sanitizeMangaContent(input: string): string {
   return input
     .trim()
     .substring(0, 5000) // Max 5000 chars
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Remove scripts
-    .replace(/on\w+="[^"]*"/gi, '') // Remove event handlers
-    .replace(/javascript:/gi, ''); // Remove javascript: URLs
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "") // Remove scripts
+    .replace(/on\w+="[^"]*"/gi, "") // Remove event handlers
+    .replace(/javascript:/gi, ""); // Remove javascript: URLs
 }
 
 /**
@@ -89,10 +89,10 @@ export function sanitizeComment(input: string): string {
   return input
     .trim()
     .substring(0, 2000) // Max 2000 chars
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-    .replace(/on\w+="[^"]*"/gi, '')
-    .replace(/javascript:/gi, '')
-    .replace(/https?:\/\/[^ ]+\.(jpg|jpeg|png|gif|webp)/gi, '[image]'); // Optionally strip image URLs
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+    .replace(/on\w+="[^"]*"/gi, "")
+    .replace(/javascript:/gi, "")
+    .replace(/https?:\/\/[^ ]+\.(jpg|jpeg|png|gif|webp)/gi, "[image]"); // Optionally strip image URLs
 }
 
 /**
@@ -143,10 +143,10 @@ export function isValidChapterId(id: any): boolean {
  */
 export function sanitizeObject<T extends Record<string, any>>(
   obj: T,
-  rules: Record<keyof T, (value: any) => any>
+  rules: Record<keyof T, (value: any) => any>,
 ): Partial<T> {
   const sanitized: Partial<T> = {};
-  
+
   for (const [key, sanitizer] of Object.entries(rules)) {
     if (key in obj) {
       try {
@@ -157,6 +157,6 @@ export function sanitizeObject<T extends Record<string, any>>(
       }
     }
   }
-  
+
   return sanitized;
 }

@@ -134,11 +134,11 @@ export interface StoredReadingProgress {
  * Database schema for IndexedDB
  */
 export interface DBSchema {
-  'reading-progress': {
+  "reading-progress": {
     key: string;
     value: StoredReadingProgress;
   };
-  'cached-chapters': {
+  "cached-chapters": {
     key: string;
     value: CachedChapter;
   };
